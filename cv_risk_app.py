@@ -1,160 +1,242 @@
 import streamlit as st
-import pdfplumber
-import re
-import math
 
-st.set_page_config(page_title="Cardiovascular Risk Assistant", layout="wide")
+st.set_page_config(layout="wide", page_title="Cardiovascular Risk Decision Support")
 
-# ---------- SAFE NUMBER PARSER ----------
-def num(x, default=0.0):
+# -------------------------
+# Helpers
+# -------------------------
+def safe_float(x):
     try:
-        if x is None:
-            return float(default)
-        if isinstance(x, str):
-            x = x.replace(",", "").strip()
+        if x is None or x == "":
+            return None
         return float(x)
     except:
-        return float(default)
+        return None
 
-# ---------- PDF EXTRACTION ----------
-def extract_values_from_pdf(uploaded_file):
-    values = {}
-    if uploaded_file is None:
-        return values
+def bmi_calc(h, w):
+    if h and w and h>0:
+        return round(w/((h/100)**2),1)
+    return None
 
-    text = ""
-    with pdfplumber.open(uploaded_file) as pdf:
-        for page in pdf.pages:
-            text += page.extract_text() + "\n"
+def non_hdl(tc, hdl):
+    if tc is not None and hdl is not None:
+        return tc - hdl
+    return None
 
-    def find(pattern):
-        m = re.search(pattern, text, re.I)
-        return m.group(1) if m else None
+def apo_ratio(apob, apoa1):
+    if apob and apoa1 and apoa1>0:
+        return round(apob/apoa1,2)
+    return None
 
-    values["tcl"] = find(r"total cholesterol.*?(\d+\.?\d*)")
-    values["hdl"] = find(r"hdl.*?(\d+\.?\d*)")
-    values["ldl"] = find(r"ldl.*?(\d+\.?\d*)")
-    values["tg"] = find(r"triglycerides.*?(\d+\.?\d*)")
-    values["a1c"] = find(r"hba1c.*?(\d+\.?\d*)")
-    values["sbp"] = find(r"systolic.*?(\d+\.?\d*)")
-    values["dbp"] = find(r"diastolic.*?(\d+\.?\d*)")
-    values["apob"] = find(r"apob.*?(\d+\.?\d*)")
-    values["apoa1"] = find(r"apoa1.*?(\d+\.?\d*)")
-    values["lpa"] = find(r"lipoprotein\(a\).*?(\d+\.?\d*)")
+def category_from_percent(p):
+    if p is None: return None
+    if p < 5: return "Low"
+    if p < 7.5: return "Moderate"
+    if p < 20: return "High"
+    return "Very High"
 
-    return values
+def color_for_category(cat):
+    return {
+        "Low":"#4CAF50",
+        "Moderate":"#FFC107",
+        "High":"#FF9800",
+        "Very High":"#F44336"
+    }.get(cat,"#9E9E9E")
 
-# ---------- PDF UI ----------
-st.title("🫀 Cardiovascular Risk Assessment")
+# -------------------------
+# LAI Rule Logic
+# -------------------------
+def lai_category(data):
+    if data["ascvd_history"]:
+        return "Very High"
 
-st.header("Upload Blood Report")
-uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
-auto = extract_values_from_pdf(uploaded_file)
+    if data["ckd"]:
+        return "Very High"
 
-# ---------- DEMOGRAPHICS ----------
+    if data["diabetes"] and data["diabetes_duration"]>=10:
+        return "Very High"
+
+    if data["diabetes"]:
+        return "High"
+
+    if data["lp_a"] and data["lp_a"]>50:
+        return "High"
+
+    if data["apob"] and data["apob"]>=130:
+        return "High"
+
+    if data["risk_factors"]>=2:
+        return "Moderate"
+
+    return "Low"
+
+# -------------------------
+# UI INPUTS
+# -------------------------
+st.title("Cardiovascular Risk Decision Support")
+
 st.header("Demographics")
-col1, col2 = st.columns(2)
+c1,c2,c3 = st.columns(3)
+age=c1.number_input("Age",0,100,40)
+sex=c2.selectbox("Sex",["Male","Female"])
+eth=c3.selectbox("Ethnicity",["South Asian","Other"])
 
-with col1:
-    age = st.number_input("Age", 18, 100, 40)
-    sex = st.selectbox("Sex", ["Male", "Female"])
+c1,c2=st.columns(2)
+height=c1.number_input("Height (cm)",100,220,170)
+weight=c2.number_input("Weight (kg)",30,200,70)
+bmi=bmi_calc(height,weight)
+st.write(f"BMI: {bmi if bmi else 'N/A'}")
 
-with col2:
-    smoker = st.checkbox("Current smoker")
-    diabetes = st.checkbox("Diabetes")
-
-# ---------- VITALS ----------
 st.header("Vitals")
-col1, col2 = st.columns(2)
+sbp=st.number_input("SBP",80,240,120)
+dbp=st.number_input("DBP",40,140,80)
 
-with col1:
-    sbp = st.number_input("Systolic BP", 80, 240, num(auto.get("sbp"),120))
-with col2:
-    dbp = st.number_input("Diastolic BP", 40, 140, num(auto.get("dbp"),80))
+st.header("Lipids")
+c1,c2,c3,c4=st.columns(4)
+tc=c1.number_input("Total Cholesterol",0,400,180)
+ldl=c2.number_input("LDL",0,300,110)
+hdl=c3.number_input("HDL",0,120,45)
+tg=c4.number_input("Triglycerides",0,600,150)
 
-# ---------- LIPIDS ----------
-st.header("Standard Lipids")
-col1, col2, col3 = st.columns(3)
+nhdl=non_hdl(tc,hdl)
+st.write(f"Non-HDL: {nhdl if nhdl else 'N/A'}")
 
-with col1:
-    tc = st.number_input("Total Cholesterol", 100, 400, num(auto.get("tcl"),180))
-    hdl = st.number_input("HDL", 10, 120, num(auto.get("hdl"),45))
+c1,c2,c3=st.columns(3)
+apob=c1.number_input("ApoB",0,200,90)
+apoa1=c2.number_input("ApoA1",0,250,140)
+lpa=c3.number_input("Lp(a)",0,300,10)
 
-with col2:
-    ldl = st.number_input("LDL", 20, 300, num(auto.get("ldl"),100))
-    tg = st.number_input("Triglycerides", 20, 600, num(auto.get("tg"),150))
+ratio=apo_ratio(apob,apoa1)
+st.write(f"ApoB/ApoA1 ratio: {ratio if ratio else 'N/A'}")
 
-with col3:
-    a1c = st.number_input("HbA1c", 3.0, 15.0, num(auto.get("a1c"),5.5))
+st.header("Diabetes")
+diabetes=st.checkbox("Diabetes")
+diabetes_duration=st.number_input("Duration (years)",0,40,0)
+dm_tx=st.checkbox("On treatment")
 
-# ---------- ADVANCED LIPIDS ----------
-st.header("Advanced Markers")
-col1, col2, col3 = st.columns(3)
+st.header("Smoking")
+smoke=st.selectbox("Smoking",["Never","Former","Current"])
 
-with col1:
-    apob = st.number_input("ApoB", 20, 200, num(auto.get("apob"),90))
-with col2:
-    apoa1 = st.number_input("ApoA1", 50, 250, num(auto.get("apoa1"),140))
-with col3:
-    lpa = st.number_input("Lp(a)", 0, 300, num(auto.get("lpa"),20))
+st.header("Medical History")
+c1,c2=st.columns(2)
+mi=c1.checkbox("MI")
+stroke=c1.checkbox("Stroke/TIA")
+pad=c1.checkbox("PAD")
+revasc=c1.checkbox("Revascularization")
 
-ratio = apob/apoa1 if apoa1>0 else 0
-st.write(f"ApoB/ApoA1 Ratio: {ratio:.2f}")
+ckd=c2.checkbox("CKD")
+hf=c2.checkbox("Heart Failure")
+nafld=c2.checkbox("NAFLD")
+mets=c2.checkbox("Metabolic Syndrome")
 
-# ---------- MEDICATIONS ----------
-st.header("Current Medications")
-statin = st.checkbox("On statin therapy")
-dm_meds = st.checkbox("On diabetes medications")
-htn_meds = st.checkbox("On hypertension medications")
+ascvd_history = mi or stroke or pad or revasc
 
-# ---------- RISK CALCULATIONS ----------
-def ascvd():
-    risk = (age*0.15)+(sbp*0.03)+(tc*0.02)-(hdl*0.02)
-    if smoker: risk+=7
-    if diabetes: risk+=6
-    return max(1,min(40,risk))
+st.header("Family History")
+fh=st.checkbox("Premature ASCVD")
 
-def framingham():
-    risk = (age*0.18)+(tc*0.025)-(hdl*0.02)+(sbp*0.02)
-    if smoker: risk+=6
-    return max(1,min(40,risk))
+st.header("Medications")
+statin=st.checkbox("Statin")
+antihtn=st.checkbox("Antihypertensive")
+antidm=st.checkbox("Antidiabetic")
+antiplatelet=st.checkbox("Antiplatelet")
 
-def qrisk():
-    risk = (age*0.2)+(sbp*0.04)+(ratio*10)
-    if diabetes: risk+=8
-    if smoker: risk+=6
-    return max(1,min(40,risk))
+st.header("Official Risk Calculator Results")
+qrisk=safe_float(st.text_input("QRISK3 (%)"))
+aha=safe_float(st.text_input("AHA ASCVD (%)"))
+hf_risk=safe_float(st.text_input("AHA Heart Failure (%)"))
 
-# ---------- OUTPUT ----------
-if st.button("Calculate Risk"):
+# -------------------------
+# PROCESS
+# -------------------------
+risk_factors=sum([smoke=="Current", fh, hdl<40 if hdl else False])
 
-    ascvd_r = ascvd()
-    fram_r = framingham()
-    qrisk_r = qrisk()
+lai=lai_category({
+    "ascvd_history":ascvd_history,
+    "ckd":ckd,
+    "diabetes":diabetes,
+    "diabetes_duration":diabetes_duration,
+    "lp_a":lpa,
+    "apob":apob,
+    "risk_factors":risk_factors
+})
 
-    st.header("Risk Results")
-    st.metric("ASCVD 10y Risk", f"{ascvd_r:.1f}%")
-    st.metric("Framingham Risk", f"{fram_r:.1f}%")
-    st.metric("QRISK3", f"{qrisk_r:.1f}%")
+aha_cat=category_from_percent(aha)
+qrisk_cat=category_from_percent(qrisk)
 
-    overall = max(ascvd_r, fram_r, qrisk_r)
+# -------------------------
+# VISUAL PANEL
+# -------------------------
+st.header("Risk Panel")
 
-    st.subheader("Cardiologist Interpretation")
+cols=st.columns(3)
 
-    if overall < 5:
-        st.success("Low cardiovascular risk")
-        st.write("Lifestyle optimization recommended")
+for col,title,cat in zip(cols,["AHA","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
+    color=color_for_category(cat)
+    col.markdown(
+        f"""
+        <div style='padding:20px;border-radius:10px;background:{color};color:white;text-align:center'>
+        <h3>{title}</h3>
+        <h2>{cat if cat else 'Insufficient data'}</h2>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-    elif overall < 20:
-        st.warning("Moderate cardiovascular risk")
-        if not statin:
-            st.write("Consider starting moderate-intensity statin")
-        else:
-            st.write("Assess LDL targets and adherence")
+# -------------------------
+# INTERPRETATION
+# -------------------------
+st.header("Guideline Interpretation")
 
+with st.expander("AHA Recommendation"):
+    if aha_cat=="Very High":
+        st.write("High intensity statin indicated")
+    elif aha_cat=="High":
+        st.write("Moderate to high intensity statin")
+    elif aha_cat=="Moderate":
+        st.write("Consider statin based on risk discussion")
     else:
-        st.error("High cardiovascular risk")
-        if not statin:
-            st.write("Start high-intensity statin therapy")
-        else:
-            st.write("Add Ezetimibe ± PCSK9 inhibitor")
+        st.write("Lifestyle management")
+
+with st.expander("QRISK3 Recommendation"):
+    if qrisk_cat in ["High","Very High"]:
+        st.write("Offer statin therapy")
+    else:
+        st.write("Lifestyle first")
+
+with st.expander("LAI Recommendation"):
+    if lai=="Very High":
+        st.write("LDL target <55 mg/dL. Add ezetimibe ± PCSK9")
+    elif lai=="High":
+        st.write("LDL target <70 mg/dL. High intensity statin")
+    elif lai=="Moderate":
+        st.write("LDL target <100 mg/dL")
+    else:
+        st.write("Lifestyle therapy")
+
+# -------------------------
+# UNIFIED DECISION
+# -------------------------
+st.header("Unified Clinical Plan")
+
+levels=["Low","Moderate","High","Very High"]
+max_level=max([aha_cat,qrisk_cat,lai], key=lambda x: levels.index(x) if x else 0)
+
+st.write(f"Final Risk Category: {max_level}")
+
+if max_level=="Very High":
+    st.write("- High intensity statin")
+    st.write("- Add ezetimibe")
+    st.write("- Consider PCSK9")
+
+elif max_level=="High":
+    st.write("- Moderate/high statin")
+
+elif max_level=="Moderate":
+    st.write("- Consider statin")
+
+else:
+    st.write("- Lifestyle only")
+
+st.write("Lifestyle:")
+st.write("- Aerobic 150–300 min/week")
+st.write("- Resistance 2–3 sessions/week")
