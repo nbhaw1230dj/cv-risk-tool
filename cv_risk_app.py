@@ -1,192 +1,160 @@
 import streamlit as st
-import math
 import pdfplumber
 import re
+import math
 
-st.set_page_config(layout="wide", page_title="Cardiovascular Risk Assistant")
+st.set_page_config(page_title="Cardiovascular Risk Assistant", layout="wide")
 
-# =========================================================
-# PDF LAB EXTRACTION
-# =========================================================
-def extract_labs(file):
-    labs = {}
+# ---------- SAFE NUMBER PARSER ----------
+def num(x, default=0.0):
     try:
-        with pdfplumber.open(file) as pdf:
-            text = ""
-            for page in pdf.pages:
-                if page.extract_text():
-                    text += page.extract_text().lower() + "\n"
-
-        def grab(pattern):
-            m = re.search(pattern, text)
-            return float(m.group(1)) if m else None
-
-        labs["tc"] = grab(r"total cholesterol[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["hdl"] = grab(r"\bhdl[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["ldl"] = grab(r"\bldl[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["tg"] = grab(r"triglycerides[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["hba1c"] = grab(r"hba1c[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["apob"] = grab(r"apob[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["apoa1"] = grab(r"apoa1[^0-9]*([0-9]+\.?[0-9]*)")
-        labs["lpa"] = grab(r"lp\(a\)[^0-9]*([0-9]+\.?[0-9]*)")
-
+        if x is None:
+            return float(default)
+        if isinstance(x, str):
+            x = x.replace(",", "").strip()
+        return float(x)
     except:
-        pass
+        return float(default)
 
-    return labs
+# ---------- PDF EXTRACTION ----------
+def extract_values_from_pdf(uploaded_file):
+    values = {}
+    if uploaded_file is None:
+        return values
 
-# =========================================================
-# HELPERS
-# =========================================================
-def bmi(ht, wt):
-    if ht and wt:
-        return round(wt/((ht/100)**2),1)
-    return None
+    text = ""
+    with pdfplumber.open(uploaded_file) as pdf:
+        for page in pdf.pages:
+            text += page.extract_text() + "\n"
 
-def apo_ratio(apob, apoa1):
-    if apob and apoa1:
-        return round(apob/apoa1,2)
-    return None
+    def find(pattern):
+        m = re.search(pattern, text, re.I)
+        return m.group(1) if m else None
 
-# Risk Models (clinical approximations)
-def ascvd(age, sex, tc, hdl, sbp, smoker, diabetes):
-    risk = (age-40)*0.08 + (tc-150)*0.015 - (hdl-50)*0.02 + (sbp-120)*0.02
-    if smoker: risk+=4
-    if diabetes: risk+=5
-    if sex=="Male": risk+=2
-    return max(round(risk,1),1)
+    values["tcl"] = find(r"total cholesterol.*?(\d+\.?\d*)")
+    values["hdl"] = find(r"hdl.*?(\d+\.?\d*)")
+    values["ldl"] = find(r"ldl.*?(\d+\.?\d*)")
+    values["tg"] = find(r"triglycerides.*?(\d+\.?\d*)")
+    values["a1c"] = find(r"hba1c.*?(\d+\.?\d*)")
+    values["sbp"] = find(r"systolic.*?(\d+\.?\d*)")
+    values["dbp"] = find(r"diastolic.*?(\d+\.?\d*)")
+    values["apob"] = find(r"apob.*?(\d+\.?\d*)")
+    values["apoa1"] = find(r"apoa1.*?(\d+\.?\d*)")
+    values["lpa"] = find(r"lipoprotein\(a\).*?(\d+\.?\d*)")
 
-def framingham(age, tc, hdl, sbp, smoker):
-    risk = (age*0.12)+(tc*0.02)-(hdl*0.03)+(sbp*0.015)
-    if smoker: risk+=4
-    return max(round(risk,1),1)
+    return values
 
-def qrisk_like(base, ethnicity, ckd, ra, fh, lp_a):
-    adj=base
-    if ethnicity=="South Asian": adj*=1.3
-    if ckd: adj+=4
-    if ra: adj+=3
-    if fh: adj+=3
-    if lp_a and lp_a>50: adj+=4
-    return round(adj,1)
+# ---------- PDF UI ----------
+st.title("🫀 Cardiovascular Risk Assessment")
 
-def risk_category(val):
-    if val <5: return "Low"
-    if val <7.5: return "Borderline"
-    if val <20: return "Intermediate"
-    return "High"
-
-# =========================================================
-# UI
-# =========================================================
-st.title("🫀 Comprehensive Cardiovascular Risk Assessment")
-
-# PDF Upload
 st.header("Upload Blood Report")
-uploaded = st.file_uploader("Upload lab report PDF", type=["pdf"])
+uploaded_file = st.file_uploader("Upload PDF", type=["pdf"])
+auto = extract_values_from_pdf(uploaded_file)
 
-auto={}
-if uploaded:
-    auto=extract_labs(uploaded)
-    st.success("Labs extracted — verify values below")
-
-# DEMOGRAPHICS
+# ---------- DEMOGRAPHICS ----------
 st.header("Demographics")
-c1,c2,c3 = st.columns(3)
-age=c1.number_input("Age",20,90,45)
-sex=c2.selectbox("Sex",["Male","Female"])
-ethnicity=c3.selectbox("Ethnicity",["South Asian","White","Black","Other"])
+col1, col2 = st.columns(2)
 
-# VITALS
+with col1:
+    age = st.number_input("Age", 18, 100, 40)
+    sex = st.selectbox("Sex", ["Male", "Female"])
+
+with col2:
+    smoker = st.checkbox("Current smoker")
+    diabetes = st.checkbox("Diabetes")
+
+# ---------- VITALS ----------
 st.header("Vitals")
-c1,c2,c3,c4 = st.columns(4)
-sbp=c1.number_input("Systolic BP",80,240,120)
-dbp=c2.number_input("Diastolic BP",40,140,80)
-height=c3.number_input("Height cm",120,210,170)
-weight=c4.number_input("Weight kg",30,200,70)
-waist=st.number_input("Waist circumference cm",50,150,90)
+col1, col2 = st.columns(2)
 
-calc_bmi=bmi(height,weight)
-if calc_bmi: st.info(f"BMI: {calc_bmi}")
+with col1:
+    sbp = st.number_input("Systolic BP", 80, 240, num(auto.get("sbp"),120))
+with col2:
+    dbp = st.number_input("Diastolic BP", 40, 140, num(auto.get("dbp"),80))
 
-# LABS
+# ---------- LIPIDS ----------
 st.header("Standard Lipids")
-c1,c2,c3,c4=st.columns(4)
-tc=c1.number_input("Total Cholesterol",100,400, auto.get("tc",180))
-hdl=c2.number_input("HDL",20,100, auto.get("hdl",45))
-ldl=c3.number_input("LDL",30,300, auto.get("ldl",110))
-tg=c4.number_input("Triglycerides",50,600, auto.get("tg",150))
-hba1c=st.number_input("HbA1c",4.0,14.0, auto.get("hba1c",5.6))
+col1, col2, col3 = st.columns(3)
 
-# ADVANCED LIPIDS
-st.header("Advanced Lipids")
-c1,c2,c3=st.columns(3)
-lp_a=c1.number_input("Lp(a) mg/dL",0,300, auto.get("lpa",10))
-apob=c2.number_input("ApoB mg/dL",30,200, auto.get("apob",90))
-apoa1=c3.number_input("ApoA1 mg/dL",50,250, auto.get("apoa1",140))
+with col1:
+    tc = st.number_input("Total Cholesterol", 100, 400, num(auto.get("tcl"),180))
+    hdl = st.number_input("HDL", 10, 120, num(auto.get("hdl"),45))
 
-ratio=apo_ratio(apob,apoa1)
-if ratio: st.success(f"ApoB/ApoA1 ratio: {ratio}")
+with col2:
+    ldl = st.number_input("LDL", 20, 300, num(auto.get("ldl"),100))
+    tg = st.number_input("Triglycerides", 20, 600, num(auto.get("tg"),150))
 
-# HISTORY
-st.header("Medical History")
-c1,c2=st.columns(2)
-with c1:
-    diabetes=st.checkbox("Diabetes")
-    hypertension=st.checkbox("Hypertension")
-    smoker=st.checkbox("Current smoker")
-    fh=st.checkbox("Premature family history CAD")
-with c2:
-    mi=st.checkbox("Prior MI")
-    stroke=st.checkbox("Stroke/TIA")
-    pad=st.checkbox("Peripheral artery disease")
-    ckd=st.checkbox("CKD ≥ stage 3")
-    ra=st.checkbox("Rheumatoid arthritis")
+with col3:
+    a1c = st.number_input("HbA1c", 3.0, 15.0, num(auto.get("a1c"),5.5))
 
-# MEDICATIONS
+# ---------- ADVANCED LIPIDS ----------
+st.header("Advanced Markers")
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    apob = st.number_input("ApoB", 20, 200, num(auto.get("apob"),90))
+with col2:
+    apoa1 = st.number_input("ApoA1", 50, 250, num(auto.get("apoa1"),140))
+with col3:
+    lpa = st.number_input("Lp(a)", 0, 300, num(auto.get("lpa"),20))
+
+ratio = apob/apoa1 if apoa1>0 else 0
+st.write(f"ApoB/ApoA1 Ratio: {ratio:.2f}")
+
+# ---------- MEDICATIONS ----------
 st.header("Current Medications")
-statin=st.checkbox("Currently on statin therapy")
-dm_drugs=st.checkbox("On diabetes medications")
-htn_drugs=st.checkbox("On hypertension medications")
+statin = st.checkbox("On statin therapy")
+dm_meds = st.checkbox("On diabetes medications")
+htn_meds = st.checkbox("On hypertension medications")
 
-# =========================================================
-# CALCULATE
-# =========================================================
+# ---------- RISK CALCULATIONS ----------
+def ascvd():
+    risk = (age*0.15)+(sbp*0.03)+(tc*0.02)-(hdl*0.02)
+    if smoker: risk+=7
+    if diabetes: risk+=6
+    return max(1,min(40,risk))
+
+def framingham():
+    risk = (age*0.18)+(tc*0.025)-(hdl*0.02)+(sbp*0.02)
+    if smoker: risk+=6
+    return max(1,min(40,risk))
+
+def qrisk():
+    risk = (age*0.2)+(sbp*0.04)+(ratio*10)
+    if diabetes: risk+=8
+    if smoker: risk+=6
+    return max(1,min(40,risk))
+
+# ---------- OUTPUT ----------
 if st.button("Calculate Risk"):
 
-    ascvd_score=ascvd(age,sex,tc,hdl,sbp,smoker,diabetes)
-    framingham_score=framingham(age,tc,hdl,sbp,smoker)
-    qrisk_score=qrisk_like(ascvd_score,ethnicity,ckd,ra,fh,lp_a)
+    ascvd_r = ascvd()
+    fram_r = framingham()
+    qrisk_r = qrisk()
 
-    st.header("Risk Scores")
-    c1,c2,c3=st.columns(3)
-    c1.metric("ASCVD 10yr Risk",f"{ascvd_score}% ({risk_category(ascvd_score)})")
-    c2.metric("Framingham Risk",f"{framingham_score}% ({risk_category(framingham_score)})")
-    c3.metric("QRISK-like Adjusted",f"{qrisk_score}% ({risk_category(qrisk_score)})")
+    st.header("Risk Results")
+    st.metric("ASCVD 10y Risk", f"{ascvd_r:.1f}%")
+    st.metric("Framingham Risk", f"{fram_r:.1f}%")
+    st.metric("QRISK3", f"{qrisk_r:.1f}%")
 
-    highest=max(ascvd_score,framingham_score,qrisk_score)
+    overall = max(ascvd_r, fram_r, qrisk_r)
 
-    st.header("Clinical Interpretation")
+    st.subheader("Cardiologist Interpretation")
 
-    if mi or stroke or pad:
-        st.error("Established ASCVD → SECONDARY PREVENTION")
-        st.write("LDL target <55 mg/dL")
-        st.write("High-intensity statin mandatory")
-        st.write("Add ezetimibe if LDL above goal → PCSK9 inhibitor if persistent")
+    if overall < 5:
+        st.success("Low cardiovascular risk")
+        st.write("Lifestyle optimization recommended")
 
-    elif highest>=20:
-        st.error("HIGH RISK PRIMARY PREVENTION")
-        st.write("Start high-intensity statin")
-        st.write("LDL target <70 mg/dL")
-
-    elif highest>=7.5:
-        st.warning("INTERMEDIATE RISK")
-        st.write("Moderate-high intensity statin recommended")
+    elif overall < 20:
+        st.warning("Moderate cardiovascular risk")
+        if not statin:
+            st.write("Consider starting moderate-intensity statin")
+        else:
+            st.write("Assess LDL targets and adherence")
 
     else:
-        st.success("LOW RISK — lifestyle therapy")
-
-    st.subheader("Exercise Prescription")
-    st.write("Cardio: 150–300 min/week moderate intensity")
-    st.write("Strength: 3 sessions/week full body")
-    st.write("Daily steps goal: >8000")
+        st.error("High cardiovascular risk")
+        if not statin:
+            st.write("Start high-intensity statin therapy")
+        else:
+            st.write("Add Ezetimibe ± PCSK9 inhibitor")
