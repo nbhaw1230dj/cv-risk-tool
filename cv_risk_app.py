@@ -1,6 +1,3 @@
-You're copying the markdown code block markers again. Save this file directly - no ``` markers:
-
-```python
 import streamlit as st
 import math
 
@@ -300,4 +297,3 @@ else:
 st.header("Risk Classification Framework")
 st.caption("Based on Lipid Association of India Recommendations 2023")
 st.image("/mnt/user-data/uploads/1771001673672_IMG_2765.jpeg", caption="Lipid Association of India (LAI) Risk Stratification and Treatment Guidelines 2023", use_container_width=True)
-```
