@@ -1,242 +1,149 @@
 import streamlit as st
 
-st.set_page_config(layout="wide", page_title="Cardiovascular Risk Decision Support")
+st.set_page_config(layout=“wide”, page_title=“🫀 Cardiovascular Risk Assessment Tool”)
 
-# -------------------------
-# Helpers
-# -------------------------
-def safe_float(x):
-    try:
-        if x is None or x == "":
-            return None
-        return float(x)
-    except:
-        return None
+––––– helpers –––––
 
-def bmi_calc(h, w):
-    if h and w and h>0:
-        return round(w/((h/100)**2),1)
-    return None
+def na_number(label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
+c1,c2=st.columns([4,1])
+val=c1.number_input(label,min_value=minv,max_value=maxv,value=default,step=step,key=f”num_{label}{key}”)
+na=c2.checkbox(“NA”,key=f”na{label}_{key}”)
+return None if na else val
 
-def non_hdl(tc, hdl):
-    if tc is not None and hdl is not None:
-        return tc - hdl
-    return None
+def bmi_calc(h,w):
+if h and w and h>0: return round(w/((h/100)**2),1)
+return None
 
-def apo_ratio(apob, apoa1):
-    if apob and apoa1 and apoa1>0:
-        return round(apob/apoa1,2)
-    return None
+def non_hdl(tc,hdl):
+if tc is not None and hdl is not None: return round(tc-hdl,1)
+return None
 
-def category_from_percent(p):
-    if p is None: return None
-    if p < 5: return "Low"
-    if p < 7.5: return "Moderate"
-    if p < 20: return "High"
-    return "Very High"
+def ratio(a,b):
+if a and b and b>0: return round(a/b,2)
+return None
 
-def color_for_category(cat):
-    return {
-        "Low":"#4CAF50",
-        "Moderate":"#FFC107",
-        "High":"#FF9800",
-        "Very High":"#F44336"
-    }.get(cat,"#9E9E9E")
+def percent_category(p):
+if p is None: return None
+if p<5: return “Low”
+if p<7.5: return “Moderate”
+if p<20: return “High”
+return “Very High”
 
-# -------------------------
-# LAI Rule Logic
-# -------------------------
-def lai_category(data):
-    if data["ascvd_history"]:
-        return "Very High"
+def color(cat):
+return {“Low”:”#4CAF50”,“Moderate”:”#FFC107”,“High”:”#FF9800”,“Very High”:”#F44336”}.get(cat,”#9E9E9E”)
 
-    if data["ckd"]:
-        return "Very High"
+––––– UI –––––
 
-    if data["diabetes"] and data["diabetes_duration"]>=10:
-        return "Very High"
+st.title(“🫀 Cardiovascular Risk Assessment Tool”)
 
-    if data["diabetes"]:
-        return "High"
-
-    if data["lp_a"] and data["lp_a"]>50:
-        return "High"
-
-    if data["apob"] and data["apob"]>=130:
-        return "High"
-
-    if data["risk_factors"]>=2:
-        return "Moderate"
-
-    return "Low"
-
-# -------------------------
-# UI INPUTS
-# -------------------------
-st.title("Cardiovascular Risk Decision Support")
-
-st.header("Demographics")
-c1,c2,c3 = st.columns(3)
-age=c1.number_input("Age",0,100,40)
-sex=c2.selectbox("Sex",["Male","Female"])
-eth=c3.selectbox("Ethnicity",["South Asian","Other"])
-
-c1,c2=st.columns(2)
-height=c1.number_input("Height (cm)",100,220,170)
-weight=c2.number_input("Weight (kg)",30,200,70)
+st.header(“Demographics”)
+age=na_number(“Age”,40,0,100,key=“age”)
+sex=st.selectbox(“Sex”,[“Male”,“Female”])
+eth=st.selectbox(“Ethnicity”,[“Indian”,“South Asian”,“White”,“Black”,“Other”])
+height=na_number(“Height (cm)”,170,100,220,key=“h”)
+weight=na_number(“Weight (kg)”,70,30,200,key=“w”)
 bmi=bmi_calc(height,weight)
-st.write(f"BMI: {bmi if bmi else 'N/A'}")
+st.write(f”BMI: {bmi if bmi else ‘NA’}”)
 
-st.header("Vitals")
-sbp=st.number_input("SBP",80,240,120)
-dbp=st.number_input("DBP",40,140,80)
+st.header(“Vitals”)
+sbp=na_number(“SBP”,120,70,240,key=“sbp”)
+dbp=na_number(“DBP”,80,40,140,key=“dbp”)
 
-st.header("Lipids")
-c1,c2,c3,c4=st.columns(4)
-tc=c1.number_input("Total Cholesterol",0,400,180)
-ldl=c2.number_input("LDL",0,300,110)
-hdl=c3.number_input("HDL",0,120,45)
-tg=c4.number_input("Triglycerides",0,600,150)
-
+st.header(“Lipids”)
+tc=na_number(“Total Cholesterol”,180,0,400,key=“tc”)
+ldl=na_number(“LDL-C”,110,0,300,key=“ldl”)
+hdl=na_number(“HDL-C”,45,0,120,key=“hdl”)
+tg=na_number(“Triglycerides”,150,0,600,key=“tg”)
 nhdl=non_hdl(tc,hdl)
-st.write(f"Non-HDL: {nhdl if nhdl else 'N/A'}")
+st.write(f”Non-HDL: {nhdl if nhdl else ‘NA’}”)
+apob=na_number(“ApoB”,90,0,200,key=“apob”)
+apoa1=na_number(“ApoA1”,140,0,250,key=“apoa1”)
+apo_ratio=ratio(apob,apoa1)
+st.write(f”ApoB/ApoA1 ratio: {apo_ratio if apo_ratio else ‘NA’}”)
+lpa=na_number(“Lp(a)”,10,0,300,key=“lpa”)
 
-c1,c2,c3=st.columns(3)
-apob=c1.number_input("ApoB",0,200,90)
-apoa1=c2.number_input("ApoA1",0,250,140)
-lpa=c3.number_input("Lp(a)",0,300,10)
+st.header(“Diabetes”)
+diabetes=st.radio(“Diabetes”,[“No”,“Yes”])
+duration=na_number(“Duration (years)”,5,0,50,key=“dm_dur”) if diabetes==“Yes” else None
+treatment=st.radio(“Treatment”,[“Oral”,“Insulin”]) if diabetes==“Yes” else None
 
-ratio=apo_ratio(apob,apoa1)
-st.write(f"ApoB/ApoA1 ratio: {ratio if ratio else 'N/A'}")
+st.header(“Smoking”)
+smoke=st.selectbox(“Smoking”,[“Never”,“Former”,“Current”])
 
-st.header("Diabetes")
-diabetes=st.checkbox("Diabetes")
-diabetes_duration=st.number_input("Duration (years)",0,40,0)
-dm_tx=st.checkbox("On treatment")
+st.header(“Medical History”)
+none_hist=st.checkbox(“None of the above”,key=“hist_none”)
+mi=st.checkbox(“MI”,disabled=none_hist)
+stroke=st.checkbox(“Stroke/TIA”,disabled=none_hist)
+pad=st.checkbox(“PAD”,disabled=none_hist)
+revasc=st.checkbox(“Revascularization”,disabled=none_hist)
+ckd=st.checkbox(“CKD”,disabled=none_hist)
+hf=st.checkbox(“Heart failure”,disabled=none_hist)
+nafld=st.checkbox(“NAFLD”,disabled=none_hist)
+mets=st.checkbox(“Metabolic syndrome”,disabled=none_hist)
+ascvd=mi or stroke or pad or revasc
 
-st.header("Smoking")
-smoke=st.selectbox("Smoking",["Never","Former","Current"])
+st.header(“Family History”)
+st.write(“Premature ASCVD = Male <55, Female <65”)
+none_fh=st.checkbox(“None of the above”,key=“fh_none”)
+prem=st.checkbox(“Premature ASCVD”,disabled=none_fh)
+fh_dm=st.checkbox(“Diabetes”,disabled=none_fh)
+fh_htn=st.checkbox(“Hypertension”,disabled=none_fh)
+fh_fh=st.checkbox(“Familial Hypercholesterolemia”,disabled=none_fh)
 
-st.header("Medical History")
-c1,c2=st.columns(2)
-mi=c1.checkbox("MI")
-stroke=c1.checkbox("Stroke/TIA")
-pad=c1.checkbox("PAD")
-revasc=c1.checkbox("Revascularization")
+st.header(“Medications”)
+none_med=st.checkbox(“None of the above”,key=“med_none”)
+statin=st.checkbox(“Statin”,disabled=none_med)
+antihtn=st.checkbox(“Antihypertensive”,disabled=none_med)
+antidm=st.checkbox(“Antidiabetic”,disabled=none_med)
+antiplate=st.checkbox(“Antiplatelet”,disabled=none_med)
 
-ckd=c2.checkbox("CKD")
-hf=c2.checkbox("Heart Failure")
-nafld=c2.checkbox("NAFLD")
-mets=c2.checkbox("Metabolic Syndrome")
+st.header(“Official Risk Calculators”)
+st.link_button(“Open QRISK3 Calculator”,“https://qrisk.org/three/”)
+st.link_button(“Open AHA PREVENT Calculator”,“https://professional.heart.org/en/guidelines-and-statements/prevent-calculator”)
 
-ascvd_history = mi or stroke or pad or revasc
+qrisk=na_number(“QRISK3 %”,10,0,100,key=“qrisk”)
+aha=na_number(“AHA ASCVD %”,8,0,100,key=“aha”)
+hf_risk=na_number(“AHA HF %”,3,0,100,key=“hf”)
 
-st.header("Family History")
-fh=st.checkbox("Premature ASCVD")
+qrisk_cat=percent_category(qrisk)
+aha_cat=percent_category(aha)
 
-st.header("Medications")
-statin=st.checkbox("Statin")
-antihtn=st.checkbox("Antihypertensive")
-antidm=st.checkbox("Antidiabetic")
-antiplatelet=st.checkbox("Antiplatelet")
+––––– LAI –––––
 
-st.header("Official Risk Calculator Results")
-qrisk=safe_float(st.text_input("QRISK3 (%)"))
-aha=safe_float(st.text_input("AHA ASCVD (%)"))
-hf_risk=safe_float(st.text_input("AHA Heart Failure (%)"))
+risk_enhancers = (smoke==“Current”) or mets or fh_fh or (lpa and lpa>50) or (apob and apob>130)
 
-# -------------------------
-# PROCESS
-# -------------------------
-risk_factors=sum([smoke=="Current", fh, hdl<40 if hdl else False])
-
-lai=lai_category({
-    "ascvd_history":ascvd_history,
-    "ckd":ckd,
-    "diabetes":diabetes,
-    "diabetes_duration":diabetes_duration,
-    "lp_a":lpa,
-    "apob":apob,
-    "risk_factors":risk_factors
-})
-
-aha_cat=category_from_percent(aha)
-qrisk_cat=category_from_percent(qrisk)
-
-# -------------------------
-# VISUAL PANEL
-# -------------------------
-st.header("Risk Panel")
-
-cols=st.columns(3)
-
-for col,title,cat in zip(cols,["AHA","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
-    color=color_for_category(cat)
-    col.markdown(
-        f"""
-        <div style='padding:20px;border-radius:10px;background:{color};color:white;text-align:center'>
-        <h3>{title}</h3>
-        <h2>{cat if cat else 'Insufficient data'}</h2>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-# -------------------------
-# INTERPRETATION
-# -------------------------
-st.header("Guideline Interpretation")
-
-with st.expander("AHA Recommendation"):
-    if aha_cat=="Very High":
-        st.write("High intensity statin indicated")
-    elif aha_cat=="High":
-        st.write("Moderate to high intensity statin")
-    elif aha_cat=="Moderate":
-        st.write("Consider statin based on risk discussion")
-    else:
-        st.write("Lifestyle management")
-
-with st.expander("QRISK3 Recommendation"):
-    if qrisk_cat in ["High","Very High"]:
-        st.write("Offer statin therapy")
-    else:
-        st.write("Lifestyle first")
-
-with st.expander("LAI Recommendation"):
-    if lai=="Very High":
-        st.write("LDL target <55 mg/dL. Add ezetimibe ± PCSK9")
-    elif lai=="High":
-        st.write("LDL target <70 mg/dL. High intensity statin")
-    elif lai=="Moderate":
-        st.write("LDL target <100 mg/dL")
-    else:
-        st.write("Lifestyle therapy")
-
-# -------------------------
-# UNIFIED DECISION
-# -------------------------
-st.header("Unified Clinical Plan")
-
-levels=["Low","Moderate","High","Very High"]
-max_level=max([aha_cat,qrisk_cat,lai], key=lambda x: levels.index(x) if x else 0)
-
-st.write(f"Final Risk Category: {max_level}")
-
-if max_level=="Very High":
-    st.write("- High intensity statin")
-    st.write("- Add ezetimibe")
-    st.write("- Consider PCSK9")
-
-elif max_level=="High":
-    st.write("- Moderate/high statin")
-
-elif max_level=="Moderate":
-    st.write("- Consider statin")
-
+if ascvd or ckd or (diabetes==“Yes” and duration and duration>=10):
+lai=“Very High”
+elif diabetes==“Yes” or risk_enhancers:
+lai=“High”
+elif prem or fh_dm or fh_htn:
+lai=“Moderate”
 else:
-    st.write("- Lifestyle only")
+lai=“Low”
 
-st.write("Lifestyle:")
-st.write("- Aerobic 150–300 min/week")
-st.write("- Resistance 2–3 sessions/week")
+––––– Visual Panel –––––
+
+st.header(“Risk Panel”)
+cols=st.columns(3)
+for col,title,cat in zip(cols,[“AHA”,“QRISK3”,“LAI”],[aha_cat,qrisk_cat,lai]):
+col.markdown(f”{title}{cat if cat else ‘Unavailable’}”,unsafe_allow_html=True)
+
+––––– Unified Decision –––––
+
+levels=[“Low”,“Moderate”,“High”,“Very High”]
+cats=[c for c in [aha_cat,qrisk_cat,lai] if c]
+final=max(cats,key=lambda x:levels.index(x)) if cats else None
+
+if eth in [“Indian”,“South Asian”] and final==“Moderate”:
+final=“High”
+
+if diabetes==“Yes” and apob and apob>130 and final==“Moderate”:
+final=“High”
+
+st.header(“Statin Recommendation”)
+if final in [“High”,“Very High”]:
+st.success(“Statins Recommended”)
+elif final:
+st.warning(“Statins Not Mandatory”)
+else:
+st.info(“Insufficient data”)
