@@ -1,4 +1,3 @@
-```python
 import streamlit as st
 import math
 
@@ -552,4 +551,3 @@ elif final:
     st.warning("Statins Not Mandatory")
 else:
     st.info("Insufficient data")
-```
