@@ -6,9 +6,24 @@ st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessmen
 
 def na_number(label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
     c1, c2 = st.columns([4,1])
-    val = c1.number_input(label, min_value=minv, max_value=maxv, value=float(default), step=float(step), key=f"num_{label}_{key}")
+
+    # force everything to float → prevents Streamlit crash
+    minv = float(minv)
+    maxv = float(maxv)
+    default = float(default)
+    step = float(step)
+
+    val = c1.number_input(
+        label,
+        min_value=minv,
+        max_value=maxv,
+        value=default,
+        step=step,
+        key=f"num_{label}_{key}"
+    )
+
     na = c2.checkbox("NA", key=f"na_{label}_{key}")
-    return None if na else val
+    return None if na else float(val)
 
 def bmi_calc(h,w):
     if h is not None and w is not None and h>0:
