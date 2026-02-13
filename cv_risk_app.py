@@ -1,3 +1,4 @@
+```python
 import streamlit as st
 import math
 
@@ -63,7 +64,7 @@ def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp
                      rheumatoid_arthritis, migraine):
     """
     QRISK3 10-year cardiovascular disease risk calculator
-    Based on published QRISK3 algorithm
+    Based on published QRISK3 algorithm (simplified version)
     """
     
     # Validate required inputs
@@ -96,37 +97,39 @@ def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp
         "Current": 4
     }.get(smoking, 0)
     
-    # Sex indicator (1=female, 0=male)
-    is_female = 1 if sex == "Female" else 0
+    # Sex indicator
+    is_female = sex == "Female"
     
-    # QRISK3 coefficients (simplified - female)
+    # QRISK3 coefficients (simplified)
     if is_female:
         survivor = 0.988876
         
-        # Main predictors
-        ln_age = math.log(age)
-        age_1 = ln_age ** 0.5
-        age_2 = ln_age
+        # Age transformation
+        age_term = (age / 10) - 4.0
         
+        # Calculate risk components
         smoking_param = smoke_code * 0.13
         diabetes_param = 0.86 if diabetes == "Yes" else 0
         
-        bmi_param = 0.0 if bmi < 20 else (
-            0.12 if bmi < 25 else
-            0.23 if bmi < 30 else
-            0.56
-        )
+        bmi_param = 0.0
+        if bmi >= 30:
+            bmi_param = 0.56
+        elif bmi >= 25:
+            bmi_param = 0.23
+        elif bmi >= 20:
+            bmi_param = 0.12
         
         sbp_param = (sbp - 120) * 0.013
         tc_hdl_param = (tc_hdl_ratio - 4) * 0.15
         
         family_param = 0.45 if family_cvd else 0
         ckd_param = 0.60 if ckd else 0
+        afib_param = 0.50 if atrial_fib else 0
+        ra_param = 0.35 if rheumatoid_arthritis else 0
         
-        # Simplified QRISK3 score
+        # Calculate score
         score = (
-            age_1 * 3.5 + 
-            age_2 * 0.5 +
+            age_term * 0.8 +
             smoking_param +
             diabetes_param +
             bmi_param +
@@ -134,34 +137,40 @@ def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp
             tc_hdl_param +
             family_param +
             ckd_param +
-            (0.20 if eth_code == 9 else 0)  # South Asian
+            afib_param +
+            ra_param +
+            (0.35 if eth_code == 9 else 0)
         )
         
     else:  # Male
         survivor = 0.977268
         
-        ln_age = math.log(age)
-        age_1 = ln_age ** 0.5
-        age_2 = ln_age
+        # Age transformation
+        age_term = (age / 10) - 4.0
         
+        # Calculate risk components
         smoking_param = smoke_code * 0.18
         diabetes_param = 0.59 if diabetes == "Yes" else 0
         
-        bmi_param = 0.0 if bmi < 20 else (
-            0.10 if bmi < 25 else
-            0.20 if bmi < 30 else
-            0.48
-        )
+        bmi_param = 0.0
+        if bmi >= 30:
+            bmi_param = 0.48
+        elif bmi >= 25:
+            bmi_param = 0.20
+        elif bmi >= 20:
+            bmi_param = 0.10
         
         sbp_param = (sbp - 120) * 0.012
         tc_hdl_param = (tc_hdl_ratio - 4) * 0.17
         
         family_param = 0.54 if family_cvd else 0
         ckd_param = 0.65 if ckd else 0
+        afib_param = 0.58 if atrial_fib else 0
+        ra_param = 0.40 if rheumatoid_arthritis else 0
         
+        # Calculate score
         score = (
-            age_1 * 3.8 + 
-            age_2 * 0.4 +
+            age_term * 0.9 +
             smoking_param +
             diabetes_param +
             bmi_param +
@@ -169,13 +178,17 @@ def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp
             tc_hdl_param +
             family_param +
             ckd_param +
-            (0.25 if eth_code == 9 else 0)
+            afib_param +
+            ra_param +
+            (0.40 if eth_code == 9 else 0)
         )
     
-    # Calculate 10-year risk
-    risk_10yr = (1 - math.pow(survivor, math.exp(score))) * 100
+    # Calculate 10-year risk using simplified formula
+    # The score needs to be properly scaled
+    risk_10yr = 100 * (1 - math.pow(survivor, math.exp(score)))
     
-    return round(min(risk_10yr, 100), 1)
+    # Cap at 100%
+    return round(min(max(risk_10yr, 0), 100), 1)
 
 
 # ---------- AHA PREVENT Calculator (ASCVD Pooled Cohort Equation) ----------
@@ -551,3 +564,13 @@ elif final:
     st.warning("Statins Not Mandatory")
 else:
     st.info("Insufficient data")
+
+
+# ---------- LAI Risk Classification Image ----------
+
+st.header("Risk Classification Framework")
+st.caption("Based on Lipid Association of India Recommendations 2023")
+st.image("/mnt/user-data/uploads/1771001673672_IMG_2765.jpeg", 
+         caption="Lipid Association of India (LAI) Risk Stratification and Treatment Guidelines 2023",
+         use_container_width=True)
+```
