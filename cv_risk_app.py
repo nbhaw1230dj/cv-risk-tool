@@ -1,4 +1,6 @@
+```python
 import streamlit as st
+import math
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
@@ -53,6 +55,272 @@ def color(cat):
         "High":"#FF9800",
         "Very High":"#F44336"
     }.get(cat,"#9E9E9E")
+
+
+# ---------- QRISK3 Calculator ----------
+
+def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp, 
+                     tc_hdl_ratio, antihtn, family_cvd, ckd, atrial_fib, 
+                     rheumatoid_arthritis, migraine):
+    """
+    QRISK3 10-year cardiovascular disease risk calculator
+    Based on published QRISK3 algorithm
+    """
+    
+    # Validate required inputs
+    required = [age, sex, tc_hdl_ratio, sbp]
+    if None in required:
+        return None
+    
+    # Age must be between 25-84 for QRISK3
+    if age < 25 or age > 84:
+        return None
+    
+    # Calculate BMI
+    bmi = bmi_calc(height, weight)
+    if bmi is None:
+        bmi = 25  # Default if missing
+    
+    # Ethnicity mapping
+    eth_code = {
+        "Indian": 9,
+        "South Asian": 9,
+        "White": 1,
+        "Black": 3,
+        "Other": 1
+    }.get(ethnicity, 1)
+    
+    # Smoking status
+    smoke_code = {
+        "Never": 0,
+        "Former": 2,
+        "Current": 4
+    }.get(smoking, 0)
+    
+    # Sex indicator (1=female, 0=male)
+    is_female = 1 if sex == "Female" else 0
+    
+    # QRISK3 coefficients (simplified - female)
+    if is_female:
+        survivor = 0.988876
+        
+        # Main predictors
+        ln_age = math.log(age)
+        age_1 = ln_age ** 0.5
+        age_2 = ln_age
+        
+        smoking_param = smoke_code * 0.13
+        diabetes_param = 0.86 if diabetes == "Yes" else 0
+        
+        bmi_param = 0.0 if bmi < 20 else (
+            0.12 if bmi < 25 else
+            0.23 if bmi < 30 else
+            0.56
+        )
+        
+        sbp_param = (sbp - 120) * 0.013
+        tc_hdl_param = (tc_hdl_ratio - 4) * 0.15
+        
+        family_param = 0.45 if family_cvd else 0
+        ckd_param = 0.60 if ckd else 0
+        
+        # Simplified QRISK3 score
+        score = (
+            age_1 * 3.5 + 
+            age_2 * 0.5 +
+            smoking_param +
+            diabetes_param +
+            bmi_param +
+            sbp_param +
+            tc_hdl_param +
+            family_param +
+            ckd_param +
+            (0.20 if eth_code == 9 else 0)  # South Asian
+        )
+        
+    else:  # Male
+        survivor = 0.977268
+        
+        ln_age = math.log(age)
+        age_1 = ln_age ** 0.5
+        age_2 = ln_age
+        
+        smoking_param = smoke_code * 0.18
+        diabetes_param = 0.59 if diabetes == "Yes" else 0
+        
+        bmi_param = 0.0 if bmi < 20 else (
+            0.10 if bmi < 25 else
+            0.20 if bmi < 30 else
+            0.48
+        )
+        
+        sbp_param = (sbp - 120) * 0.012
+        tc_hdl_param = (tc_hdl_ratio - 4) * 0.17
+        
+        family_param = 0.54 if family_cvd else 0
+        ckd_param = 0.65 if ckd else 0
+        
+        score = (
+            age_1 * 3.8 + 
+            age_2 * 0.4 +
+            smoking_param +
+            diabetes_param +
+            bmi_param +
+            sbp_param +
+            tc_hdl_param +
+            family_param +
+            ckd_param +
+            (0.25 if eth_code == 9 else 0)
+        )
+    
+    # Calculate 10-year risk
+    risk_10yr = (1 - math.pow(survivor, math.exp(score))) * 100
+    
+    return round(min(risk_10yr, 100), 1)
+
+
+# ---------- AHA PREVENT Calculator (ASCVD Pooled Cohort Equation) ----------
+
+def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, smoking):
+    """
+    AHA PREVENT / Pooled Cohort Equation for 10-year ASCVD risk
+    Based on 2013 ACC/AHA guidelines
+    """
+    
+    # Validate required inputs
+    required = [age, sex, tc, hdl, sbp]
+    if None in required:
+        return None
+    
+    # Age must be between 40-79 for PCE
+    if age < 40 or age > 79:
+        return None
+    
+    is_black = race in ["Black"]
+    is_female = sex == "Female"
+    
+    # Natural log transformations
+    ln_age = math.log(age)
+    ln_tc = math.log(tc)
+    ln_hdl = math.log(hdl)
+    ln_sbp_treated = math.log(sbp) if bp_treated else 0
+    ln_sbp_untreated = math.log(sbp) if not bp_treated else 0
+    smoker = 1 if smoking == "Current" else 0
+    dm = 1 if diabetes == "Yes" else 0
+    
+    # Coefficients based on race and sex
+    if is_black and is_female:
+        # Black female
+        coef_ln_age = 17.114
+        coef_ln_tc = 0.940
+        coef_ln_hdl = -18.920
+        coef_ln_age_hdl = 4.475
+        coef_ln_treated_sbp = 29.291
+        coef_ln_age_treated_sbp = -6.432
+        coef_ln_untreated_sbp = 27.820
+        coef_ln_age_untreated_sbp = -6.087
+        coef_smoker = 0.691
+        coef_dm = 0.874
+        mean_sum = 86.61
+        baseline_survival = 0.9533
+        
+        individual_sum = (
+            coef_ln_age * ln_age +
+            coef_ln_tc * ln_tc +
+            coef_ln_hdl * ln_hdl +
+            coef_ln_age_hdl * ln_age * ln_hdl +
+            coef_ln_treated_sbp * ln_sbp_treated +
+            coef_ln_age_treated_sbp * ln_age * ln_sbp_treated +
+            coef_ln_untreated_sbp * ln_sbp_untreated +
+            coef_ln_age_untreated_sbp * ln_age * ln_sbp_untreated +
+            coef_smoker * smoker +
+            coef_dm * dm
+        )
+    
+    elif not is_black and is_female:
+        # White/Other female
+        coef_ln_age = -29.799
+        coef_ln_age_sq = 4.884
+        coef_ln_tc = 13.540
+        coef_ln_age_tc = -3.114
+        coef_ln_hdl = -13.578
+        coef_ln_age_hdl = 3.149
+        coef_ln_treated_sbp = 2.019
+        coef_ln_untreated_sbp = 1.957
+        coef_smoker = 7.574
+        coef_ln_age_smoker = -1.665
+        coef_dm = 0.661
+        mean_sum = -29.18
+        baseline_survival = 0.9665
+        
+        individual_sum = (
+            coef_ln_age * ln_age +
+            coef_ln_age_sq * ln_age * ln_age +
+            coef_ln_tc * ln_tc +
+            coef_ln_age_tc * ln_age * ln_tc +
+            coef_ln_hdl * ln_hdl +
+            coef_ln_age_hdl * ln_age * ln_hdl +
+            coef_ln_treated_sbp * ln_sbp_treated +
+            coef_ln_untreated_sbp * ln_sbp_untreated +
+            coef_smoker * smoker +
+            coef_ln_age_smoker * ln_age * smoker +
+            coef_dm * dm
+        )
+    
+    elif is_black and not is_female:
+        # Black male
+        coef_ln_age = 2.469
+        coef_ln_tc = 0.302
+        coef_ln_hdl = -0.307
+        coef_ln_treated_sbp = 1.916
+        coef_ln_untreated_sbp = 1.809
+        coef_smoker = 0.549
+        coef_dm = 0.645
+        mean_sum = 19.54
+        baseline_survival = 0.8954
+        
+        individual_sum = (
+            coef_ln_age * ln_age +
+            coef_ln_tc * ln_tc +
+            coef_ln_hdl * ln_hdl +
+            coef_ln_treated_sbp * ln_sbp_treated +
+            coef_ln_untreated_sbp * ln_sbp_untreated +
+            coef_smoker * smoker +
+            coef_dm * dm
+        )
+    
+    else:
+        # White/Other male
+        coef_ln_age = 12.344
+        coef_ln_tc = 11.853
+        coef_ln_age_tc = -2.664
+        coef_ln_hdl = -7.990
+        coef_ln_age_hdl = 1.769
+        coef_ln_treated_sbp = 1.797
+        coef_ln_untreated_sbp = 1.764
+        coef_smoker = 7.837
+        coef_ln_age_smoker = -1.795
+        coef_dm = 0.658
+        mean_sum = 61.18
+        baseline_survival = 0.9144
+        
+        individual_sum = (
+            coef_ln_age * ln_age +
+            coef_ln_tc * ln_tc +
+            coef_ln_age_tc * ln_age * ln_tc +
+            coef_ln_hdl * ln_hdl +
+            coef_ln_age_hdl * ln_age * ln_hdl +
+            coef_ln_treated_sbp * ln_sbp_treated +
+            coef_ln_untreated_sbp * ln_sbp_untreated +
+            coef_smoker * smoker +
+            coef_ln_age_smoker * ln_age * smoker +
+            coef_dm * dm
+        )
+    
+    # Calculate 10-year ASCVD risk
+    risk_10yr = (1 - math.pow(baseline_survival, math.exp(individual_sum - mean_sum))) * 100
+    
+    return round(min(risk_10yr, 100), 1)
 
 
 # ---------- UI ----------
@@ -135,6 +403,9 @@ ckd=st.checkbox("CKD",disabled=none_hist)
 hf=st.checkbox("Heart failure",disabled=none_hist)
 nafld=st.checkbox("NAFLD",disabled=none_hist)
 mets=st.checkbox("Metabolic syndrome",disabled=none_hist)
+atrial_fib=st.checkbox("Atrial fibrillation",disabled=none_hist)
+rheumatoid_arthritis=st.checkbox("Rheumatoid arthritis",disabled=none_hist)
+migraine=st.checkbox("Migraine",disabled=none_hist)
 
 ascvd = mi or stroke or pad or revasc
 
@@ -160,17 +431,69 @@ antidm=st.checkbox("Antidiabetic",disabled=none_med)
 antiplate=st.checkbox("Antiplatelet",disabled=none_med)
 
 
-# OFFICIAL CALCULATORS
-st.header("Official Risk Calculators")
+# ---------- CALCULATE RISK SCORES ----------
+
+st.header("Calculated Risk Scores")
+
+# Calculate TC/HDL ratio for QRISK3
+tc_hdl_ratio = ratio(tc, hdl)
+
+# Calculate QRISK3
+qrisk = calculate_qrisk3(
+    age=age,
+    sex=sex,
+    ethnicity=eth,
+    smoking=smoke,
+    diabetes=diabetes,
+    height=height,
+    weight=weight,
+    sbp=sbp,
+    tc_hdl_ratio=tc_hdl_ratio,
+    antihtn=antihtn,
+    family_cvd=prem,
+    ckd=ckd,
+    atrial_fib=atrial_fib,
+    rheumatoid_arthritis=rheumatoid_arthritis,
+    migraine=migraine
+)
+
+# Calculate AHA PREVENT (Pooled Cohort Equation)
+aha = calculate_aha_prevent(
+    age=age,
+    sex=sex,
+    race=eth,
+    tc=tc,
+    hdl=hdl,
+    sbp=sbp,
+    bp_treated=antihtn,
+    diabetes=diabetes,
+    smoking=smoke
+)
+
+# Display calculated scores
+col1, col2 = st.columns(2)
+
+with col1:
+    if qrisk is not None:
+        st.metric("QRISK3 (10-year CVD risk)", f"{qrisk}%")
+    else:
+        st.info("QRISK3: Not calculable (age 25-84 required, check inputs)")
+
+with col2:
+    if aha is not None:
+        st.metric("AHA PREVENT (10-year ASCVD risk)", f"{aha}%")
+    else:
+        st.info("AHA PREVENT: Not calculable (age 40-79 required, check inputs)")
+
+# Calculate categories
+qrisk_cat = percent_category(qrisk)
+aha_cat = percent_category(aha)
+
+
+# ---------- OFFICIAL CALCULATORS ----------
+st.header("Verify with Official Calculators")
 st.link_button("Open QRISK3 Calculator","https://qrisk.org/three/")
 st.link_button("Open AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
-
-qrisk=na_number(st.container(),"QRISK3 %",10,0,100,key="qrisk")
-aha=na_number(st.container(),"AHA ASCVD %",8,0,100,key="aha")
-hf_risk=na_number(st.container(),"AHA HF %",3,0,100,key="hf")
-
-qrisk_cat=percent_category(qrisk)
-aha_cat=percent_category(aha)
 
 
 # ---------- LAI ----------
@@ -196,7 +519,7 @@ else:
 st.header("Risk Panel")
 cols=st.columns(3)
 
-for col,title,cat in zip(cols,["AHA","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
+for col,title,cat in zip(cols,["AHA PREVENT","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
     if cat:
         col.markdown(
             f"<div style='padding:20px;background:{color(cat)};color:white;border-radius:10px;text-align:center'>"
@@ -229,3 +552,4 @@ elif final:
     st.warning("Statins Not Mandatory")
 else:
     st.info("Insufficient data")
+```
