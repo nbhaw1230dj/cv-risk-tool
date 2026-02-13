@@ -4,16 +4,15 @@ st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessmen
 
 # ---------- helpers ----------
 
-def na_number(label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
-    c1, c2 = st.columns([4,1])
+def na_number(container, label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
+    col1, col2 = container.columns([4,1])
 
-    # force everything to float → prevents Streamlit crash
     minv = float(minv)
     maxv = float(maxv)
     default = float(default)
     step = float(step)
 
-    val = c1.number_input(
+    val = col1.number_input(
         label,
         min_value=minv,
         max_value=maxv,
@@ -22,7 +21,7 @@ def na_number(label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
         key=f"num_{label}_{key}"
     )
 
-    na = c2.checkbox("NA", key=f"na_{label}_{key}")
+    na = col2.checkbox("NA", key=f"na_{label}_{key}")
     return None if na else float(val)
 
 def bmi_calc(h,w):
@@ -41,8 +40,7 @@ def ratio(a,b):
     return None
 
 def percent_category(p):
-    if p is None:
-        return None
+    if p is None: return None
     if p<5: return "Low"
     if p<7.5: return "Moderate"
     if p<20: return "High"
@@ -56,49 +54,79 @@ def color(cat):
         "Very High":"#F44336"
     }.get(cat,"#9E9E9E")
 
+
 # ---------- UI ----------
 
 st.title("🫀 Cardiovascular Risk Assessment Tool")
 
+# DEMOGRAPHICS
 st.header("Demographics")
-age=na_number("Age",40,0,100,key="age")
-sex=st.selectbox("Sex",["Male","Female"])
-eth=st.selectbox("Ethnicity",["Indian","South Asian","White","Black","Other"])
-height=na_number("Height (cm)",170,100,220,key="h")
-weight=na_number("Weight (kg)",70,30,200,key="w")
+
+age = na_number(st.container(), "Age", 40, 0, 100, key="age")
+
+colA, colB, colC = st.columns(3)
+sex = colA.selectbox("Sex",["Male","Female"])
+eth = colB.selectbox("Ethnicity",["Indian","South Asian","White","Black","Other"])
+
+height = na_number(colA, "Height (cm)",170,100,220,key="h")
+weight = na_number(colB, "Weight (kg)",70,30,200,key="w")
+
 bmi=bmi_calc(height,weight)
-st.write(f"BMI: {bmi if bmi is not None else 'NA'}")
+colC.metric("BMI", bmi if bmi is not None else "NA")
 
+
+# VITALS
 st.header("Vitals")
-sbp=na_number("SBP",120,70,240,key="sbp")
-dbp=na_number("DBP",80,40,140,key="dbp")
+col1,col2 = st.columns(2)
+sbp=na_number(col1,"SBP",120,70,240,key="sbp")
+dbp=na_number(col2,"DBP",80,40,140,key="dbp")
 
+
+# LIPIDS
 st.header("Lipids")
-tc=na_number("Total Cholesterol",180,0,400,key="tc")
-ldl=na_number("LDL-C",110,0,300,key="ldl")
-hdl=na_number("HDL-C",45,0,120,key="hdl")
-tg=na_number("Triglycerides",150,0,600,key="tg")
+
+r1c1,r1c2 = st.columns(2)
+tc=na_number(r1c1,"Total Cholesterol",180,0,400,key="tc")
+ldl=na_number(r1c2,"LDL-C",110,0,300,key="ldl")
+
+r2c1,r2c2 = st.columns(2)
+hdl=na_number(r2c1,"HDL-C",45,0,120,key="hdl")
+tg=na_number(r2c2,"Triglycerides",150,0,600,key="tg")
 
 nhdl=non_hdl(tc,hdl)
-st.write(f"Non-HDL: {nhdl if nhdl is not None else 'NA'}")
+st.metric("Non-HDL", nhdl if nhdl is not None else "NA")
 
-apob=na_number("ApoB",90,0,200,key="apob")
-apoa1=na_number("ApoA1",140,0,250,key="apoa1")
+r3c1,r3c2 = st.columns(2)
+apob=na_number(r3c1,"ApoB",90,0,200,key="apob")
+apoa1=na_number(r3c2,"ApoA1",140,0,250,key="apoa1")
+
 apo_ratio=ratio(apob,apoa1)
-st.write(f"ApoB/ApoA1 ratio: {apo_ratio if apo_ratio is not None else 'NA'}")
+st.metric("ApoB/ApoA1 ratio", apo_ratio if apo_ratio is not None else "NA")
 
-lpa=na_number("Lp(a)",10,0,300,key="lpa")
+lpa=na_number(st.container(),"Lp(a)",10,0,300,key="lpa")
 
+
+# DIABETES
 st.header("Diabetes")
 diabetes=st.radio("Diabetes",["No","Yes"])
-duration=na_number("Duration (years)",5,0,50,key="dm_dur") if diabetes=="Yes" else None
-treatment=st.radio("Treatment",["Oral","Insulin"]) if diabetes=="Yes" else None
 
+if diabetes=="Yes":
+    duration=na_number(st.container(),"Duration (years)",5,0,50,key="dm_dur")
+    treatment=st.radio("Treatment",["Oral","Insulin"])
+else:
+    duration=None
+    treatment=None
+
+
+# SMOKING
 st.header("Smoking")
 smoke=st.selectbox("Smoking",["Never","Former","Current"])
 
+
+# MEDICAL HISTORY
 st.header("Medical History")
 none_hist=st.checkbox("None of the above",key="hist_none")
+
 mi=st.checkbox("MI",disabled=none_hist)
 stroke=st.checkbox("Stroke/TIA",disabled=none_hist)
 pad=st.checkbox("PAD",disabled=none_hist)
@@ -107,33 +135,43 @@ ckd=st.checkbox("CKD",disabled=none_hist)
 hf=st.checkbox("Heart failure",disabled=none_hist)
 nafld=st.checkbox("NAFLD",disabled=none_hist)
 mets=st.checkbox("Metabolic syndrome",disabled=none_hist)
+
 ascvd = mi or stroke or pad or revasc
 
+
+# FAMILY HISTORY
 st.header("Family History")
 st.write("Premature ASCVD = Male <55, Female <65")
+
 none_fh=st.checkbox("None of the above",key="fh_none")
 prem=st.checkbox("Premature ASCVD",disabled=none_fh)
 fh_dm=st.checkbox("Diabetes",disabled=none_fh)
 fh_htn=st.checkbox("Hypertension",disabled=none_fh)
 fh_fh=st.checkbox("Familial Hypercholesterolemia",disabled=none_fh)
 
+
+# MEDICATIONS
 st.header("Medications")
 none_med=st.checkbox("None of the above",key="med_none")
+
 statin=st.checkbox("Statin",disabled=none_med)
 antihtn=st.checkbox("Antihypertensive",disabled=none_med)
 antidm=st.checkbox("Antidiabetic",disabled=none_med)
 antiplate=st.checkbox("Antiplatelet",disabled=none_med)
 
+
+# OFFICIAL CALCULATORS
 st.header("Official Risk Calculators")
 st.link_button("Open QRISK3 Calculator","https://qrisk.org/three/")
 st.link_button("Open AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
 
-qrisk=na_number("QRISK3 %",10,0,100,key="qrisk")
-aha=na_number("AHA ASCVD %",8,0,100,key="aha")
-hf_risk=na_number("AHA HF %",3,0,100,key="hf")
+qrisk=na_number(st.container(),"QRISK3 %",10,0,100,key="qrisk")
+aha=na_number(st.container(),"AHA ASCVD %",8,0,100,key="aha")
+hf_risk=na_number(st.container(),"AHA HF %",3,0,100,key="hf")
 
 qrisk_cat=percent_category(qrisk)
 aha_cat=percent_category(aha)
+
 
 # ---------- LAI ----------
 
@@ -152,6 +190,7 @@ elif prem or fh_dm or fh_htn:
 else:
     lai="Low"
 
+
 # ---------- Visual Panel ----------
 
 st.header("Risk Panel")
@@ -167,6 +206,7 @@ for col,title,cat in zip(cols,["AHA","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
     else:
         col.info(f"{title}: Unavailable")
 
+
 # ---------- Unified Decision ----------
 
 levels=["Low","Moderate","High","Very High"]
@@ -179,6 +219,7 @@ if final=="Moderate" and eth in ["Indian","South Asian"]:
 
 if diabetes=="Yes" and apob is not None and apob>130 and final=="Moderate":
     final="High"
+
 
 st.header("Statin Recommendation")
 
