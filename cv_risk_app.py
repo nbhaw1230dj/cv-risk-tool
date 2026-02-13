@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
-––––– helpers –––––
+----- helpers -----
 
 def na_number(label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
 c1,c2=st.columns([4,1])
@@ -32,7 +32,7 @@ return "Very High"
 def color(cat):
 return {"Low":"#4CAF50","Moderate":"#FFC107","High":"#FF9800","Very High":"#F44336"}.get(cat,"#9E9E9E")
 
-––––– UI –––––
+----- UI -----
 
 st.title("🫀 Cardiovascular Risk Assessment Tool")
 
@@ -108,7 +108,7 @@ hf_risk=na_number("AHA HF %",3,0,100,key="hf")
 qrisk_cat=percent_category(qrisk)
 aha_cat=percent_category(aha)
 
-––––– LAI –––––
+----- LAI -----
 
 risk_enhancers = (smoke=="Current") or mets or fh_fh or (lpa and lpa>50) or (apob and apob>130)
 
@@ -121,14 +121,14 @@ lai="Moderate"
 else:
 lai="Low"
 
-––––– Visual Panel –––––
+----- Visual Panel -----
 
 st.header("Risk Panel")
 cols=st.columns(3)
 for col,title,cat in zip(cols,["AHA","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
 col.markdown(f"{title}{cat if cat else ‘Unavailable'}",unsafe_allow_html=True)
 
-––––– Unified Decision –––––
+----- Unified Decision -----
 
 levels=["Low","Moderate","High","Very High"]
 cats=[c for c in [aha_cat,qrisk_cat,lai] if c]
