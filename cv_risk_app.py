@@ -293,7 +293,3 @@ elif final:
     st.warning("Statins Not Mandatory")
 else:
     st.info("Insufficient data")
-
-st.header("Risk Classification Framework")
-st.caption("Based on Lipid Association of India Recommendations 2023")
-st.image("/mnt/user-data/uploads/1771001673672_IMG_2765.jpeg", caption="Lipid Association of India (LAI) Risk Stratification and Treatment Guidelines 2023", use_container_width=True)
