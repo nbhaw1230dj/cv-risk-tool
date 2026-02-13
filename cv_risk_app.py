@@ -2,7 +2,7 @@ import streamlit as st
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
------ helpers -----
+# ----- helpers -----
 
 def na_number(label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
 c1,c2=st.columns([4,1])
