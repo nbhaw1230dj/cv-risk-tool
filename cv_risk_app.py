@@ -1,101 +1,156 @@
 import streamlit as st
 from cv_risk_calculators import run_all_risk_assessments
+from pypdf import PdfReader
+import re
+from openai import OpenAI
+import os
 
 st.set_page_config(layout="wide")
-
-# ---------- STYLE ----------
-st.markdown("""
-<style>
-.block-container {padding-top: 2rem;}
-.card {
-    background-color: #f7f9fc;
-    padding: 18px;
-    border-radius: 12px;
-    margin-bottom: 18px;
-    border: 1px solid #e6eaf1;
-}
-.section-title {
-    font-size:20px;
-    font-weight:600;
-    margin-bottom:10px;
-}
-.bmi-bar {
-    background-color:#e9f2ff;
-    padding:8px;
-    border-radius:8px;
-    font-weight:600;
-}
-</style>
-""", unsafe_allow_html=True)
-
 st.title("🫀 Cardiovascular Risk Assessment")
 
-# ---------- Demographics ----------
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">Demographics</div>', unsafe_allow_html=True)
+# ------------------- OPENAI -------------------
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-c1,c2,c3 = st.columns(3)
-age = c1.number_input("Age",0,120,40)
-sex = c2.selectbox("Sex",["Male","Female"])
-eth = c3.selectbox("Race/Ethnicity",["Asian","White","Black","Other"])
+# ------------------- HELPERS -------------------
+def extract_value(pattern,text):
+    m = re.search(pattern,text,re.IGNORECASE)
+    return float(m.group(1)) if m else None
 
-st.markdown('</div>', unsafe_allow_html=True)
+def safe_input(label,default):
+    col1,col2 = st.columns([4,1])
+    val = col1.number_input(label,value=default)
+    na = col2.checkbox("NA",key=label)
+    return None if na else val
 
-# ---------- Vitals ----------
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">Vital Signs</div>', unsafe_allow_html=True)
+def generate_report(patient,results):
 
-c1,c2,c3,c4,c5 = st.columns(5)
-sbp = c1.number_input("Systolic BP",80,250,120)
-dbp = c2.number_input("Diastolic BP",40,150,80)
-height = c3.number_input("Height cm",100,220,170)
-weight = c4.number_input("Weight kg",30,200,70)
-waist = c5.number_input("Waist cm",40,150,80)
+    prompt=f"""
+You are a preventive cardiologist.
 
-bmi = weight/((height/100)**2)
-st.markdown(f'<div class="bmi-bar">Calculated BMI: {bmi:.1f} kg/m²</div>', unsafe_allow_html=True)
+Analyze this patient and produce a structured clinical report.
 
-st.markdown('</div>', unsafe_allow_html=True)
+PATIENT DATA:
+{patient}
 
-# ---------- Labs ----------
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">Laboratory Values</div>', unsafe_allow_html=True)
+RISK SCORES:
+{results}
 
-c1,c2,c3,c4,c5 = st.columns(5)
-tc = c1.number_input("Total Cholesterol",50,400,180)
-hdl = c2.number_input("HDL",10,100,45)
-ldl = c3.number_input("LDL",10,300,100)
-tg = c4.number_input("Triglycerides",30,500,150)
-glucose = c5.number_input("Fasting Glucose",50,300,95)
+Write sections:
 
-st.markdown('</div>', unsafe_allow_html=True)
+1. Global cardiovascular risk interpretation
+2. Lipid lowering therapy recommendation (drug + intensity + LDL goal)
+3. Need for ezetimibe / PCSK9 / fibrate
+4. Diabetes cardioprotective drugs
+5. Aspirin indication
+6. Indian diet plan (veg and non veg options separately)
+7. Calorie deficit and weight target
+8. Strength + cardio exercise prescription (days/week + minutes)
+"""
 
-# ---------- Therapy ----------
-st.markdown('<div class="card">', unsafe_allow_html=True)
-st.markdown('<div class="section-title">Current Therapy</div>', unsafe_allow_html=True)
+    res = client.chat.completions.create(
+        model="gpt-4.1-mini",
+        messages=[{"role":"user","content":prompt}],
+        temperature=0.2
+    )
 
-c1,c2 = st.columns(2)
-statin = c1.selectbox("Statin therapy",["No statin","Moderate intensity","High intensity"])
-diabetes_tx = c2.selectbox("Diabetes treatment",["No diabetes","Oral","Insulin"])
+    return res.choices[0].message.content
 
-st.markdown('</div>', unsafe_allow_html=True)
+# ------------------- PDF UPLOAD -------------------
+st.header("Upload Blood Report")
+uploaded = st.file_uploader("Upload lab report PDF",type="pdf")
 
-# ---------- Calculate ----------
-if st.button("Calculate Cardiovascular Risk"):
+pdf_vals={}
+if uploaded:
+    reader = PdfReader(uploaded)
+    text=""
+    for p in reader.pages:
+        if p.extract_text():
+            text+=p.extract_text()
 
-    patient = {
-        "age":age,"sex":sex,
-        "ldl":ldl,"hdl":hdl,"tc":tc,"tg":tg,
-        "sbp":sbp,
-        "statin":statin,
-        "diabetes_tx":diabetes_tx
+    pdf_vals["ldl"]=extract_value(r"LDL[^0-9]*([\d.]+)",text)
+    pdf_vals["hdl"]=extract_value(r"HDL[^0-9]*([\d.]+)",text)
+    pdf_vals["tc"]=extract_value(r"Total Cholesterol[^0-9]*([\d.]+)",text)
+    pdf_vals["tg"]=extract_value(r"Triglycerides[^0-9]*([\d.]+)",text)
+    pdf_vals["hba1c"]=extract_value(r"HbA1c[^0-9]*([\d.]+)",text)
+
+    st.success("Lab values extracted from PDF")
+
+# ------------------- DEMOGRAPHICS -------------------
+st.header("Demographics")
+c1,c2,c3=st.columns(3)
+age=safe_input("Age",40)
+sex=c2.selectbox("Sex",["Male","Female"])
+race=c3.selectbox("Race/Ethnicity",["Asian","White","Black","Other"])
+
+# ------------------- VITALS -------------------
+st.header("Vital Signs")
+sbp=safe_input("Systolic BP",120)
+dbp=safe_input("Diastolic BP",80)
+height=safe_input("Height cm",170)
+weight=safe_input("Weight kg",70)
+waist=safe_input("Waist cm",80)
+
+bmi=None
+if height and weight:
+    bmi=weight/((height/100)**2)
+    st.info(f"BMI: {bmi:.1f}")
+
+# ------------------- LABS -------------------
+st.header("Laboratory Values")
+tc=safe_input("Total Cholesterol",pdf_vals.get("tc",180))
+hdl=safe_input("HDL",pdf_vals.get("hdl",45))
+ldl=safe_input("LDL",pdf_vals.get("ldl",100))
+tg=safe_input("Triglycerides",pdf_vals.get("tg",150))
+hba1c=safe_input("HbA1c",pdf_vals.get("hba1c",5.6))
+
+# ------------------- HISTORY -------------------
+st.header("Medical History")
+diabetes=st.selectbox("Diabetes status",["None","Prediabetes","Diabetes"])
+htn_tx=st.checkbox("On hypertension treatment")
+ckd=st.checkbox("CKD stage 3+")
+hf=st.checkbox("Heart failure")
+af=st.checkbox("Atrial fibrillation")
+prior_mi=st.checkbox("Prior MI")
+prior_stroke=st.checkbox("Prior stroke/TIA")
+revasc=st.checkbox("PCI/CABG")
+pad=st.checkbox("Peripheral artery disease")
+
+# ------------------- FAMILY -------------------
+st.header("Family History")
+premature_cvd=st.checkbox("Premature CVD in first-degree relative")
+fh_diabetes=st.checkbox("Family history diabetes")
+
+# ------------------- LIFESTYLE -------------------
+st.header("Lifestyle")
+smoking=st.selectbox("Smoking status",["Never","Former","Current"])
+
+# ------------------- THERAPY -------------------
+st.header("Current Therapy")
+statin=st.selectbox("Statin therapy",["No statin","Moderate intensity","High intensity"])
+dm_tx=st.selectbox("Diabetes treatment",["None","Oral","Insulin"])
+
+# ------------------- CALCULATE -------------------
+if st.button("Calculate Risk"):
+
+    patient={
+        "age":age,"sex":sex,"race":race,"sbp":sbp,"dbp":dbp,"bmi":bmi,
+        "ldl":ldl,"hdl":hdl,"tc":tc,"tg":tg,"hba1c":hba1c,
+        "diabetes":diabetes,"smoking":smoking,
+        "htn_tx":htn_tx,"ckd":ckd,"hf":hf,"af":af,
+        "prior_mi":prior_mi,"prior_stroke":prior_stroke,"revasc":revasc,"pad":pad,
+        "premature_cvd":premature_cvd,"fh_diabetes":fh_diabetes,
+        "statin":statin,"dm_tx":dm_tx
     }
 
-    results = run_all_risk_assessments(patient)
+    results=run_all_risk_assessments(patient)
 
-    st.header("Results")
+    st.header("Risk Scores")
     for k,v in results.items():
         if v["status"]=="ok":
             st.success(f"{k}: {v['value']}")
         else:
             st.warning(f"{k}: Not calculable ({v['reason']})")
+
+    st.header("Clinical Cardiologist Summary")
+    report=generate_report(patient,results)
+    st.markdown(report)
