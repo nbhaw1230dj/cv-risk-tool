@@ -1,12 +1,43 @@
 import streamlit as st
 import math
+import pdfplumber
+import re
 
 st.set_page_config(layout="wide", page_title="Cardiovascular Risk Assistant")
 
 # =========================================================
-# UTILITY FUNCTIONS
+# PDF LAB EXTRACTION
 # =========================================================
+def extract_labs(file):
+    labs = {}
+    try:
+        with pdfplumber.open(file) as pdf:
+            text = ""
+            for page in pdf.pages:
+                if page.extract_text():
+                    text += page.extract_text().lower() + "\n"
 
+        def grab(pattern):
+            m = re.search(pattern, text)
+            return float(m.group(1)) if m else None
+
+        labs["tc"] = grab(r"total cholesterol[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["hdl"] = grab(r"\bhdl[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["ldl"] = grab(r"\bldl[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["tg"] = grab(r"triglycerides[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["hba1c"] = grab(r"hba1c[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["apob"] = grab(r"apob[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["apoa1"] = grab(r"apoa1[^0-9]*([0-9]+\.?[0-9]*)")
+        labs["lpa"] = grab(r"lp\(a\)[^0-9]*([0-9]+\.?[0-9]*)")
+
+    except:
+        pass
+
+    return labs
+
+# =========================================================
+# HELPERS
+# =========================================================
 def bmi(ht, wt):
     if ht and wt:
         return round(wt/((ht/100)**2),1)
@@ -17,14 +48,9 @@ def apo_ratio(apob, apoa1):
         return round(apob/apoa1,2)
     return None
 
-# ---------- RISK MODELS (clinically comparable estimates) ----------
-
+# Risk Models (clinical approximations)
 def ascvd(age, sex, tc, hdl, sbp, smoker, diabetes):
-    risk = 0
-    risk += (age-40)*0.08
-    risk += (tc-150)*0.015
-    risk -= (hdl-50)*0.02
-    risk += (sbp-120)*0.02
+    risk = (age-40)*0.08 + (tc-150)*0.015 - (hdl-50)*0.02 + (sbp-120)*0.02
     if smoker: risk+=4
     if diabetes: risk+=5
     if sex=="Male": risk+=2
@@ -53,8 +79,16 @@ def risk_category(val):
 # =========================================================
 # UI
 # =========================================================
-
 st.title("🫀 Comprehensive Cardiovascular Risk Assessment")
+
+# PDF Upload
+st.header("Upload Blood Report")
+uploaded = st.file_uploader("Upload lab report PDF", type=["pdf"])
+
+auto={}
+if uploaded:
+    auto=extract_labs(uploaded)
+    st.success("Labs extracted — verify values below")
 
 # DEMOGRAPHICS
 st.header("Demographics")
@@ -78,19 +112,18 @@ if calc_bmi: st.info(f"BMI: {calc_bmi}")
 # LABS
 st.header("Standard Lipids")
 c1,c2,c3,c4=st.columns(4)
-tc=c1.number_input("Total Cholesterol",100,400,180)
-hdl=c2.number_input("HDL",20,100,45)
-ldl=c3.number_input("LDL",30,300,110)
-tg=c4.number_input("Triglycerides",50,600,150)
-
-hba1c=st.number_input("HbA1c",4.0,14.0,5.6)
+tc=c1.number_input("Total Cholesterol",100,400, auto.get("tc",180))
+hdl=c2.number_input("HDL",20,100, auto.get("hdl",45))
+ldl=c3.number_input("LDL",30,300, auto.get("ldl",110))
+tg=c4.number_input("Triglycerides",50,600, auto.get("tg",150))
+hba1c=st.number_input("HbA1c",4.0,14.0, auto.get("hba1c",5.6))
 
 # ADVANCED LIPIDS
 st.header("Advanced Lipids")
 c1,c2,c3=st.columns(3)
-lp_a=c1.number_input("Lp(a) mg/dL",0,300,10)
-apob=c2.number_input("ApoB mg/dL",30,200,90)
-apoa1=c3.number_input("ApoA1 mg/dL",50,250,140)
+lp_a=c1.number_input("Lp(a) mg/dL",0,300, auto.get("lpa",10))
+apob=c2.number_input("ApoB mg/dL",30,200, auto.get("apob",90))
+apoa1=c3.number_input("ApoA1 mg/dL",50,250, auto.get("apoa1",140))
 
 ratio=apo_ratio(apob,apoa1)
 if ratio: st.success(f"ApoB/ApoA1 ratio: {ratio}")
@@ -98,13 +131,11 @@ if ratio: st.success(f"ApoB/ApoA1 ratio: {ratio}")
 # HISTORY
 st.header("Medical History")
 c1,c2=st.columns(2)
-
 with c1:
     diabetes=st.checkbox("Diabetes")
     hypertension=st.checkbox("Hypertension")
     smoker=st.checkbox("Current smoker")
     fh=st.checkbox("Premature family history CAD")
-
 with c2:
     mi=st.checkbox("Prior MI")
     stroke=st.checkbox("Stroke/TIA")
@@ -116,11 +147,11 @@ with c2:
 st.header("Current Medications")
 statin=st.checkbox("Currently on statin therapy")
 dm_drugs=st.checkbox("On diabetes medications")
+htn_drugs=st.checkbox("On hypertension medications")
 
 # =========================================================
 # CALCULATE
 # =========================================================
-
 if st.button("Calculate Risk"):
 
     ascvd_score=ascvd(age,sex,tc,hdl,sbp,smoker,diabetes)
@@ -135,18 +166,13 @@ if st.button("Calculate Risk"):
 
     highest=max(ascvd_score,framingham_score,qrisk_score)
 
-    # =====================================================
-    # CLINICAL RECOMMENDATION
-    # =====================================================
-
     st.header("Clinical Interpretation")
 
     if mi or stroke or pad:
         st.error("Established ASCVD → SECONDARY PREVENTION")
-        st.write("LDL target: <55 mg/dL")
+        st.write("LDL target <55 mg/dL")
         st.write("High-intensity statin mandatory")
-        st.write("Add ezetimibe if LDL >55")
-        st.write("Consider PCSK9 inhibitor if still elevated")
+        st.write("Add ezetimibe if LDL above goal → PCSK9 inhibitor if persistent")
 
     elif highest>=20:
         st.error("HIGH RISK PRIMARY PREVENTION")
@@ -155,60 +181,12 @@ if st.button("Calculate Risk"):
 
     elif highest>=7.5:
         st.warning("INTERMEDIATE RISK")
-        st.write("Moderate-to-high intensity statin recommended")
+        st.write("Moderate-high intensity statin recommended")
 
     else:
-        st.success("LOW RISK → lifestyle therapy")
+        st.success("LOW RISK — lifestyle therapy")
 
-    # Risk enhancers
-    st.subheader("Risk Enhancers")
-    if lp_a>50: st.write("Elevated Lp(a) → early aggressive prevention")
-    if ratio and ratio>0.9: st.write("High ApoB/ApoA1 ratio → atherogenic risk")
-    if fh: st.write("Family history present")
-
-    # =====================================================
-    # DIET
-    # =====================================================
-
-    st.header("Diet Prescription (Indian)")
-
-    st.subheader("Vegetarian")
-    st.write("""
-    Breakfast: oats/dalia + nuts
-    Lunch: 2 multigrain roti + dal + sabzi + salad
-    Snack: roasted chana / fruit
-    Dinner: paneer/tofu/soy + vegetables
-    Avoid: ghee, bakery items, refined carbs
-    """)
-
-    st.subheader("Non-Vegetarian")
-    st.write("""
-    Eggs: up to 1 whole/day
-    Chicken/fish: grilled, not fried
-    Replace red meat with fish
-    Use mustard/olive oil
-    """)
-
-    if calc_bmi:
-        calories=weight*22
-        deficit=int(calories*0.25)
-        st.write(f"Recommended calorie deficit: ~{deficit} kcal/day")
-
-    # =====================================================
-    # EXERCISE
-    # =====================================================
-
-    st.header("Exercise Prescription")
-
-    st.write("""
-    Cardio:
-    150–300 min/week moderate OR 75–150 vigorous
-    (Brisk walk 30–45 min daily)
-
-    Strength:
-    3 days/week full body
-    6–8 exercises
-    8–12 reps × 3 sets
-
-    Waist reduction goal: <90 cm (men) <80 cm (women)
-    """)
+    st.subheader("Exercise Prescription")
+    st.write("Cardio: 150–300 min/week moderate intensity")
+    st.write("Strength: 3 sessions/week full body")
+    st.write("Daily steps goal: >8000")
