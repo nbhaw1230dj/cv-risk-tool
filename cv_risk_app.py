@@ -230,9 +230,9 @@ migraine=st.checkbox("Migraine",disabled=none_hist)
 ascvd = mi or stroke or pad or revasc
 
 st.header("Family History")
-st.write("Premature ASCVD = Male <55, Female <65")
+st.write("Premature ASCVD = Male <55, Female <65 in first-degree relatives")
 none_fh=st.checkbox("None of the above",key="fh_none")
-prem=st.checkbox("Premature ASCVD",disabled=none_fh)
+prem_ascvd=st.checkbox("Premature ASCVD in first-degree relatives",disabled=none_fh)
 fh_dm=st.checkbox("Diabetes",disabled=none_fh)
 fh_htn=st.checkbox("Hypertension",disabled=none_fh)
 fh_fh=st.checkbox("Familial Hypercholesterolemia",disabled=none_fh)
@@ -246,7 +246,7 @@ antiplate=st.checkbox("Antiplatelet",disabled=none_med)
 
 st.header("Calculated Risk Scores")
 tc_hdl_ratio = ratio(tc, hdl)
-qrisk = calculate_qrisk3(age, sex, eth, smoke, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, prem, ckd, atrial_fib, rheumatoid_arthritis, migraine)
+qrisk = calculate_qrisk3(age, sex, eth, smoke, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, migraine)
 aha = calculate_aha_prevent(age, sex, eth, tc, hdl, sbp, antihtn, diabetes, smoke)
 col1, col2 = st.columns(2)
 with col1:
@@ -271,7 +271,7 @@ if ascvd or ckd or (diabetes=="Yes" and duration is not None and duration>=10):
     lai="Very High"
 elif diabetes=="Yes" or risk_enhancers:
     lai="High"
-elif prem or fh_dm or fh_htn:
+elif prem_ascvd or fh_dm or fh_htn:
     lai="Moderate"
 else:
     lai="Low"
