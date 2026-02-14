@@ -3,12 +3,18 @@ import math
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
-def na_number(container, label, default=0.0, minv=0.0, maxv=500.0, step=1.0, key=None):
+def na_number(container, label, default=None, minv=0.0, maxv=500.0, step=1.0, key=None):
     col1, col2 = container.columns([4,1])
     minv = float(minv)
     maxv = float(maxv)
-    default = float(default)
     step = float(step)
+    
+    # Set default to minv if None
+    if default is None:
+        default = minv
+    else:
+        default = float(default)
+    
     val = col1.number_input(label, min_value=minv, max_value=maxv, value=default, step=step, key=f"num_{label}_{key}")
     na = col2.checkbox("NA", key=f"na_{label}_{key}")
     return None if na else float(val)
@@ -166,40 +172,40 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
 st.title("🫀 Cardiovascular Risk Assessment Tool")
 
 st.header("Demographics")
-age = na_number(st.container(), "Age", 0, 0, 100, key="age")
+age = na_number(st.container(), "Age", minv=0, maxv=100, key="age")
 colA, colB, colC = st.columns(3)
 sex = colA.selectbox("Sex",["Male","Female"])
 eth = colB.selectbox("Ethnicity",["Indian","South Asian","White","Black","Other"])
-height = na_number(colA, "Height (cm)",0,100,220,key="h")
-weight = na_number(colB, "Weight (kg)",0,30,200,key="w")
+height = na_number(colA, "Height (cm)", minv=100, maxv=220, key="h")
+weight = na_number(colB, "Weight (kg)", minv=30, maxv=200, key="w")
 bmi=bmi_calc(height,weight)
 colC.metric("BMI", bmi if bmi is not None else "NA")
 
 st.header("Vitals")
 col1,col2 = st.columns(2)
-sbp=na_number(col1,"SBP",0,70,240,key="sbp")
-dbp=na_number(col2,"DBP",0,40,140,key="dbp")
+sbp=na_number(col1,"SBP", minv=70, maxv=240, key="sbp")
+dbp=na_number(col2,"DBP", minv=40, maxv=140, key="dbp")
 
 st.header("Lipids")
 r1c1,r1c2 = st.columns(2)
-tc=na_number(r1c1,"Total Cholesterol",0,0,400,key="tc")
-ldl=na_number(r1c2,"LDL-C",0,0,300,key="ldl")
+tc=na_number(r1c1,"Total Cholesterol", minv=0, maxv=400, key="tc")
+ldl=na_number(r1c2,"LDL-C", minv=0, maxv=300, key="ldl")
 r2c1,r2c2 = st.columns(2)
-hdl=na_number(r2c1,"HDL-C",0,0,120,key="hdl")
-tg=na_number(r2c2,"Triglycerides",0,0,600,key="tg")
+hdl=na_number(r2c1,"HDL-C", minv=0, maxv=120, key="hdl")
+tg=na_number(r2c2,"Triglycerides", minv=0, maxv=600, key="tg")
 nhdl=non_hdl(tc,hdl)
 st.metric("Non-HDL", nhdl if nhdl is not None else "NA")
 r3c1,r3c2 = st.columns(2)
-apob=na_number(r3c1,"ApoB",0,0,200,key="apob")
-apoa1=na_number(r3c2,"ApoA1",0,0,250,key="apoa1")
+apob=na_number(r3c1,"ApoB", minv=0, maxv=200, key="apob")
+apoa1=na_number(r3c2,"ApoA1", minv=0, maxv=250, key="apoa1")
 apo_ratio=ratio(apob,apoa1)
 st.metric("ApoB/ApoA1 ratio", apo_ratio if apo_ratio is not None else "NA")
-lpa=na_number(st.container(),"Lp(a)",0,0,300,key="lpa")
+lpa=na_number(st.container(),"Lp(a)", minv=0, maxv=300, key="lpa")
 
 st.header("Diabetes")
 diabetes=st.radio("Diabetes",["No","Yes"])
 if diabetes=="Yes":
-    duration=na_number(st.container(),"Duration (years)",0,0,50,key="dm_dur")
+    duration=na_number(st.container(),"Duration (years)", minv=0, maxv=50, key="dm_dur")
     treatment=st.radio("Treatment",["Oral","Insulin"])
 else:
     duration=None
