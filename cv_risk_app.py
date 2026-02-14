@@ -6,12 +6,10 @@ st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessmen
 # Custom CSS for medical-grade UI
 st.markdown("""
 <style>
-    /* Main container styling */
     .main {
         background-color: #f5f7fa;
     }
     
-    /* Headers */
     h1 {
         color: #1a365d;
         font-weight: 600;
@@ -40,7 +38,6 @@ st.markdown("""
         margin-bottom: 1rem;
     }
     
-    /* Input field containers */
     .stNumberInput {
         margin-bottom: 0.5rem;
     }
@@ -54,7 +51,6 @@ st.markdown("""
         flex: 1;
     }
     
-    /* Checkbox styling for NA */
     .stCheckbox {
         display: flex;
         align-items: center;
@@ -70,7 +66,6 @@ st.markdown("""
         margin-top: 1.8rem;
     }
     
-    /* Risk panel cards */
     .risk-card {
         border-radius: 10px;
         padding: 1.5rem;
@@ -110,7 +105,6 @@ st.markdown("""
         border-left: 5px solid #6c757d;
     }
     
-    /* Contributing factors */
     .contributing-factors {
         background-color: rgba(255,255,255,0.8);
         border-radius: 8px;
@@ -145,7 +139,6 @@ st.markdown("""
         color: #4299e1;
     }
     
-    /* Metrics */
     .stMetric {
         background-color: white;
         padding: 1.2rem;
@@ -154,7 +147,6 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    /* Input fields */
     .stNumberInput > div > div > input {
         background-color: white;
         border: 2px solid #cbd5e0;
@@ -168,7 +160,6 @@ st.markdown("""
         box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
     }
     
-    /* Buttons */
     .stButton > button {
         background-color: #2c5282;
         color: white;
@@ -186,7 +177,6 @@ st.markdown("""
         transform: translateY(-1px);
     }
     
-    /* Info boxes */
     .stInfo {
         background-color: #e6f3ff;
         border-left: 5px solid #4299e1;
@@ -194,7 +184,6 @@ st.markdown("""
         padding: 1rem;
     }
     
-    /* Success boxes */
     .stSuccess {
         background-color: #d4edda;
         border-left: 5px solid #28a745;
@@ -202,7 +191,6 @@ st.markdown("""
         padding: 1rem;
     }
     
-    /* Warning boxes */
     .stWarning {
         background-color: #fff3cd;
         border-left: 5px solid #ffc107;
@@ -210,42 +198,35 @@ st.markdown("""
         padding: 1rem;
     }
     
-    /* Section dividers */
     hr {
         border: none;
         border-top: 2px solid #e2e8f0;
         margin: 3rem 0;
     }
     
-    /* Checkbox labels */
     .stCheckbox label {
         font-weight: 500;
         color: #2d3748;
     }
     
-    /* Radio buttons */
     .stRadio > div {
         gap: 1rem;
     }
     
-    /* Selectbox */
     .stSelectbox > div > div {
         background-color: white;
         border: 2px solid #cbd5e0;
         border-radius: 6px;
     }
     
-    /* Column spacing */
     .row-widget.stHorizontal {
         gap: 1.5rem;
     }
     
-    /* Section spacing */
     .element-container {
         margin-bottom: 0.5rem;
     }
     
-    /* Link buttons */
     .stLinkButton > a {
         background-color: #2c5282;
         color: white;
@@ -805,27 +786,84 @@ with cols[2]:
     else:
         st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">LAI Risk</h3><p style="margin:0.5rem 0;">Unavailable</p></div>', unsafe_allow_html=True)
 
-# ========== STATIN RECOMMENDATION ==========
+# ========== STATIN RECOMMENDATION (CORRECTED LOGIC) ==========
 st.markdown("---")
 st.header("💊 Statin Recommendation")
 st.markdown("")
 
-levels=["Low","Moderate","High","Very High"]
-cats=[c for c in [aha_cat,qrisk_cat,lai] if c]
-final = max(cats,key=lambda x:levels.index(x)) if cats else None
+# According to LAI 2023 guidelines (Figure 4):
+# Statins recommended when:
+# 1. LAI risk is "High" or "Very High"
+# 2. OR at least 2 out of 3 risk scores show "High" or "Very High"
+# 3. OR any single score shows "Very High"
 
-if final=="Moderate" and eth in ["Indian","South Asian"]:
-    final="High"
-if diabetes=="Yes" and apob is not None and apob>130 and final=="Moderate":
-    final="High"
+# Count how many scores are High or Very High
+high_or_very_high_count = 0
+very_high_count = 0
 
-if final in ["High","Very High"]:
-    st.success("✅ **Statins Recommended** — High or Very High cardiovascular risk identified")
-elif final:
-    st.warning("⚠️ **Statins Not Mandatory** — Consider lifestyle modification and periodic re-assessment")
+if aha_cat in ["High", "Very High"]:
+    high_or_very_high_count += 1
+if aha_cat == "Very High":
+    very_high_count += 1
+
+if qrisk_cat in ["High", "Very High"]:
+    high_or_very_high_count += 1
+if qrisk_cat == "Very High":
+    very_high_count += 1
+
+if lai in ["High", "Very High"]:
+    high_or_very_high_count += 1
+if lai == "Very High":
+    very_high_count += 1
+
+# Determine if statins are recommended
+statins_recommended = False
+recommendation_reason = ""
+
+if lai in ["High", "Very High"]:
+    statins_recommended = True
+    recommendation_reason = f"LAI risk category is {lai}"
+elif very_high_count >= 1:
+    statins_recommended = True
+    scores_very_high = []
+    if aha_cat == "Very High":
+        scores_very_high.append("AHA PREVENT")
+    if qrisk_cat == "Very High":
+        scores_very_high.append("QRISK3")
+    recommendation_reason = f"{', '.join(scores_very_high)} showing Very High risk"
+elif high_or_very_high_count >= 2:
+    statins_recommended = True
+    recommendation_reason = "At least 2 risk scores showing High or Very High risk"
+
+# South Asian adjustment for moderate risk
+if not statins_recommended and lai == "Moderate" and eth in ["Indian","South Asian"]:
+    statins_recommended = True
+    recommendation_reason = "Moderate risk upgraded to High for South Asian ethnicity"
+
+# Diabetes with ApoB >130 adjustment
+if not statins_recommended and diabetes=="Yes" and apob is not None and apob>130:
+    statins_recommended = True
+    recommendation_reason = "Diabetes with elevated ApoB (>130 mg/dL)"
+
+if statins_recommended:
+    st.success(f"✅ **Statins Recommended**")
+    st.info(f"**Reason:** {recommendation_reason}")
+    st.markdown("""
+    **Treatment approach per LAI 2023:**
+    - Initiate statin therapy to achieve LDL-C target based on risk category
+    - High risk: LDL-C <70 mg/dL
+    - Very High risk: LDL-C <50 mg/dL
+    - Lifestyle modifications are essential adjunct therapy
+    """)
 else:
-    st.info("ℹ️ **Insufficient Data** — Complete required fields for comprehensive risk assessment")
+    st.warning("⚠️ **Statins Not Mandatory** — Lifestyle modification recommended")
+    st.info("""
+    **Current risk profile:**
+    - Focus on heart-healthy lifestyle measures
+    - Periodic re-assessment recommended
+    - Consider statins if risk factors worsen or South Asian with risk enhancers
+    """)
 
 st.markdown("")
 st.markdown("---")
-st.caption("*This tool is intended for clinical decision support. All treatment decisions should be made in consultation with the patient and consider individual circumstances.*")
+st.caption("*This tool is intended for clinical decision support based on LAI 2023 Guidelines. All treatment decisions should be made in consultation with the patient and consider individual circumstances.*")
