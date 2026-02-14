@@ -3,13 +3,172 @@ import math
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
+# Custom CSS for medical-grade UI
+st.markdown("""
+<style>
+    /* Main container styling */
+    .main {
+        background-color: #f8f9fa;
+    }
+    
+    /* Headers */
+    h1 {
+        color: #1a365d;
+        font-weight: 600;
+        border-bottom: 3px solid #2c5282;
+        padding-bottom: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    h2 {
+        color: #2d3748;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        border-left: 4px solid #4299e1;
+        padding-left: 1rem;
+    }
+    
+    /* Risk panel cards */
+    .risk-card {
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 0.5rem 0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .risk-low {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 4px solid #28a745;
+    }
+    
+    .risk-moderate {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+        border-left: 4px solid #ffc107;
+    }
+    
+    .risk-high {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffd966 100%);
+        border-left: 4px solid #ff9800;
+    }
+    
+    .risk-veryhigh {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        border-left: 4px solid #dc3545;
+    }
+    
+    .risk-unavailable {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        border-left: 4px solid #6c757d;
+    }
+    
+    /* Contributing factors */
+    .contributing-factors {
+        background-color: rgba(255,255,255,0.7);
+        border-radius: 6px;
+        padding: 0.75rem;
+        margin-top: 1rem;
+        font-size: 0.9rem;
+        border: 1px solid rgba(0,0,0,0.1);
+    }
+    
+    .factor-title {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .factor-item {
+        color: #4a5568;
+        padding: 0.2rem 0;
+        padding-left: 1rem;
+        position: relative;
+    }
+    
+    .factor-item:before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+    }
+    
+    /* Metrics */
+    .stMetric {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    /* Input fields */
+    .stNumberInput > div > div > input {
+        background-color: white;
+        border: 1px solid #cbd5e0;
+        border-radius: 4px;
+    }
+    
+    /* Buttons */
+    .stButton > button {
+        background-color: #2c5282;
+        color: white;
+        font-weight: 500;
+        border-radius: 6px;
+        border: none;
+        padding: 0.5rem 1.5rem;
+        transition: all 0.3s;
+    }
+    
+    .stButton > button:hover {
+        background-color: #1a365d;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    /* Info boxes */
+    .stInfo {
+        background-color: #e6f3ff;
+        border-left: 4px solid #4299e1;
+        border-radius: 4px;
+    }
+    
+    /* Success boxes */
+    .stSuccess {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+        border-radius: 4px;
+    }
+    
+    /* Warning boxes */
+    .stWarning {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+        border-radius: 4px;
+    }
+    
+    /* Section dividers */
+    hr {
+        border: none;
+        border-top: 2px solid #e2e8f0;
+        margin: 2rem 0;
+    }
+    
+    /* Checkbox labels */
+    .stCheckbox label {
+        font-weight: 500;
+        color: #2d3748;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 def na_number(container, label, default=None, minv=0.0, maxv=500.0, step=1.0, key=None):
     col1, col2 = container.columns([4,1])
     minv = float(minv)
     maxv = float(maxv)
     step = float(step)
     
-    # Set default to minv if None
     if default is None:
         default = minv
     else:
@@ -43,6 +202,132 @@ def percent_category(p):
 
 def color(cat):
     return {"Low":"#4CAF50","Moderate":"#FFC107","High":"#FF9800","Very High":"#F44336"}.get(cat,"#9E9E9E")
+
+def get_contributing_factors_aha(age, sex, tc, hdl, sbp, bp_treated, diabetes, smoking):
+    """Identify main contributing factors for AHA PREVENT risk"""
+    factors = []
+    
+    if age and age >= 65:
+        factors.append("Advanced age (≥65 years)")
+    elif age and age >= 55:
+        factors.append("Age >55 years")
+    
+    if smoking == "Current":
+        factors.append("Current smoking")
+    
+    if diabetes == "Yes":
+        factors.append("Diabetes mellitus")
+    
+    if tc and tc >= 240:
+        factors.append(f"High total cholesterol ({tc} mg/dL)")
+    
+    if hdl and hdl < 40:
+        factors.append(f"Low HDL cholesterol ({hdl} mg/dL)")
+    
+    if sbp and sbp >= 160:
+        factors.append(f"Severe hypertension (SBP {sbp} mmHg)")
+    elif sbp and sbp >= 140:
+        factors.append(f"Stage 2 hypertension (SBP {sbp} mmHg)")
+    elif sbp and sbp >= 130:
+        factors.append(f"Stage 1 hypertension (SBP {sbp} mmHg)")
+    
+    return factors
+
+def get_contributing_factors_qrisk(age, sex, smoking, diabetes, bmi, sbp, tc_hdl_ratio, family_cvd, ckd, atrial_fib, rheumatoid_arthritis, ethnicity):
+    """Identify main contributing factors for QRISK3"""
+    factors = []
+    
+    if age and age >= 70:
+        factors.append("Advanced age (≥70 years)")
+    elif age and age >= 60:
+        factors.append("Age ≥60 years")
+    
+    if smoking == "Current":
+        factors.append("Current smoking")
+    elif smoking == "Former":
+        factors.append("Former smoking")
+    
+    if diabetes == "Yes":
+        factors.append("Diabetes mellitus")
+    
+    if bmi and bmi >= 35:
+        factors.append(f"Severe obesity (BMI {bmi:.1f})")
+    elif bmi and bmi >= 30:
+        factors.append(f"Obesity (BMI {bmi:.1f})")
+    
+    if sbp and sbp >= 160:
+        factors.append(f"Severe hypertension (SBP {sbp} mmHg)")
+    elif sbp and sbp >= 140:
+        factors.append(f"Hypertension (SBP {sbp} mmHg)")
+    
+    if tc_hdl_ratio and tc_hdl_ratio >= 6:
+        factors.append(f"High TC/HDL ratio ({tc_hdl_ratio:.1f})")
+    elif tc_hdl_ratio and tc_hdl_ratio >= 5:
+        factors.append(f"Elevated TC/HDL ratio ({tc_hdl_ratio:.1f})")
+    
+    if family_cvd:
+        factors.append("Premature family history of CVD")
+    
+    if ckd:
+        factors.append("Chronic kidney disease")
+    
+    if atrial_fib:
+        factors.append("Atrial fibrillation")
+    
+    if rheumatoid_arthritis:
+        factors.append("Rheumatoid arthritis")
+    
+    if ethnicity in ["Indian", "South Asian"]:
+        factors.append("South Asian ethnicity")
+    
+    return factors
+
+def get_contributing_factors_lai(ascvd, ckd, diabetes, duration, smoke, mets, fh_fh, lpa, apob, prem_ascvd, fh_dm, fh_htn, ldl):
+    """Identify main contributing factors for LAI risk category"""
+    factors = []
+    
+    if ascvd:
+        factors.append("Established ASCVD (MI/Stroke/PAD/Revascularization)")
+    
+    if ckd:
+        factors.append("Chronic kidney disease (stage 3-5)")
+    
+    if diabetes == "Yes":
+        if duration and duration >= 10:
+            factors.append(f"Long-standing diabetes ({int(duration)} years)")
+        else:
+            factors.append("Diabetes mellitus")
+    
+    if smoke == "Current":
+        factors.append("Current smoking")
+    
+    if mets:
+        factors.append("Metabolic syndrome")
+    
+    if fh_fh:
+        factors.append("Familial hypercholesterolemia")
+    
+    if lpa and lpa >= 50:
+        factors.append(f"Elevated Lp(a) ({lpa} mg/dL)")
+    
+    if apob and apob >= 130:
+        factors.append(f"Elevated ApoB ({apob} mg/dL)")
+    
+    if ldl and ldl >= 190:
+        factors.append(f"Severe hypercholesterolemia (LDL {ldl} mg/dL)")
+    elif ldl and ldl >= 160:
+        factors.append(f"High LDL cholesterol ({ldl} mg/dL)")
+    
+    if prem_ascvd:
+        factors.append("Premature ASCVD in first-degree relatives")
+    
+    if fh_dm:
+        factors.append("Family history of diabetes")
+    
+    if fh_htn:
+        factors.append("Family history of hypertension")
+    
+    return factors
 
 def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, family_cvd, ckd, atrial_fib, rheumatoid_arthritis, migraine):
     required = [age, sex, tc_hdl_ratio, sbp]
@@ -170,6 +455,7 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
     return round(min(risk_10yr, 100), 1)
 
 st.title("🫀 Cardiovascular Risk Assessment Tool")
+st.markdown("*Evidence-based risk stratification for clinical decision support*")
 
 st.header("Demographics")
 age = na_number(st.container(), "Age", minv=0, maxv=100, key="age")
@@ -244,10 +530,13 @@ antihtn=st.checkbox("Antihypertensive",disabled=none_med)
 antidm=st.checkbox("Antidiabetic",disabled=none_med)
 antiplate=st.checkbox("Antiplatelet",disabled=none_med)
 
-st.header("Calculated Risk Scores")
+st.markdown("---")
+st.header("📊 Calculated Risk Scores")
+
 tc_hdl_ratio = ratio(tc, hdl)
 qrisk = calculate_qrisk3(age, sex, eth, smoke, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, migraine)
 aha = calculate_aha_prevent(age, sex, eth, tc, hdl, sbp, antihtn, diabetes, smoke)
+
 col1, col2 = st.columns(2)
 with col1:
     if qrisk is not None:
@@ -259,12 +548,17 @@ with col2:
         st.metric("AHA PREVENT (10-year ASCVD risk)", f"{aha}%")
     else:
         st.info("AHA PREVENT: Not calculable (age 40-79 required, check inputs)")
+
 qrisk_cat = percent_category(qrisk)
 aha_cat = percent_category(aha)
 
-st.header("Verify with Official Calculators")
-st.link_button("Open QRISK3 Calculator","https://qrisk.org/three/")
-st.link_button("Open AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
+st.markdown("---")
+st.subheader("🔗 Verify with Official Calculators")
+col1, col2 = st.columns(2)
+with col1:
+    st.link_button("Open QRISK3 Calculator","https://qrisk.org/three/")
+with col2:
+    st.link_button("Open AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
 
 risk_enhancers = (smoke=="Current") or mets or fh_fh or (lpa is not None and lpa>50) or (apob is not None and apob>130)
 if ascvd or ckd or (diabetes=="Yes" and duration is not None and duration>=10):
@@ -276,13 +570,60 @@ elif prem_ascvd or fh_dm or fh_htn:
 else:
     lai="Low"
 
-st.header("Risk Panel")
+st.markdown("---")
+st.header("🎯 Risk Stratification Panel")
+
 cols=st.columns(3)
-for col,title,cat in zip(cols,["AHA PREVENT","QRISK3","LAI"],[aha_cat,qrisk_cat,lai]):
-    if cat:
-        col.markdown(f"<div style='padding:20px;background:{color(cat)};color:white;border-radius:10px;text-align:center'><h3>{title}</h3><h2>{cat}</h2></div>",unsafe_allow_html=True)
+
+# AHA PREVENT
+with cols[0]:
+    if aha_cat:
+        cat_class = aha_cat.lower().replace(" ", "")
+        st.markdown(f'<div class="risk-card risk-{cat_class}"><h3 style="margin:0; color:#2d3748;">AHA PREVENT</h3><h1 style="margin:0.5rem 0; color:#1a365d;">{aha_cat}</h1><p style="margin:0; font-size:1.2rem; font-weight:600;">{aha}%</p></div>', unsafe_allow_html=True)
+        
+        if aha_cat != "Low":
+            factors = get_contributing_factors_aha(age, sex, tc, hdl, sbp, antihtn, diabetes, smoke)
+            if factors:
+                st.markdown('<div class="contributing-factors"><div class="factor-title">Contributing Factors:</div>', unsafe_allow_html=True)
+                for factor in factors[:5]:
+                    st.markdown(f'<div class="factor-item">{factor}</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
     else:
-        col.info(f"{title}: Unavailable")
+        st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">AHA PREVENT</h3><p style="margin:0.5rem 0;">Not calculable</p></div>', unsafe_allow_html=True)
+
+# QRISK3
+with cols[1]:
+    if qrisk_cat:
+        cat_class = qrisk_cat.lower().replace(" ", "")
+        st.markdown(f'<div class="risk-card risk-{cat_class}"><h3 style="margin:0; color:#2d3748;">QRISK3</h3><h1 style="margin:0.5rem 0; color:#1a365d;">{qrisk_cat}</h1><p style="margin:0; font-size:1.2rem; font-weight:600;">{qrisk}%</p></div>', unsafe_allow_html=True)
+        
+        if qrisk_cat != "Low":
+            factors = get_contributing_factors_qrisk(age, sex, smoke, diabetes, bmi, sbp, tc_hdl_ratio, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, eth)
+            if factors:
+                st.markdown('<div class="contributing-factors"><div class="factor-title">Contributing Factors:</div>', unsafe_allow_html=True)
+                for factor in factors[:5]:
+                    st.markdown(f'<div class="factor-item">{factor}</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">QRISK3</h3><p style="margin:0.5rem 0;">Not calculable</p></div>', unsafe_allow_html=True)
+
+# LAI
+with cols[2]:
+    if lai:
+        cat_class = lai.lower().replace(" ", "")
+        st.markdown(f'<div class="risk-card risk-{cat_class}"><h3 style="margin:0; color:#2d3748;">LAI Risk</h3><h1 style="margin:0.5rem 0; color:#1a365d;">{lai}</h1><p style="margin:0; font-size:0.9rem; font-style:italic;">Lipid Association of India</p></div>', unsafe_allow_html=True)
+        
+        if lai != "Low":
+            factors = get_contributing_factors_lai(ascvd, ckd, diabetes, duration, smoke, mets, fh_fh, lpa, apob, prem_ascvd, fh_dm, fh_htn, ldl)
+            if factors:
+                st.markdown('<div class="contributing-factors"><div class="factor-title">Contributing Factors:</div>', unsafe_allow_html=True)
+                for factor in factors[:5]:
+                    st.markdown(f'<div class="factor-item">{factor}</div>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">LAI Risk</h3><p style="margin:0.5rem 0;">Unavailable</p></div>', unsafe_allow_html=True)
+
+st.markdown("---")
 
 levels=["Low","Moderate","High","Very High"]
 cats=[c for c in [aha_cat,qrisk_cat,lai] if c]
@@ -292,10 +633,10 @@ if final=="Moderate" and eth in ["Indian","South Asian"]:
 if diabetes=="Yes" and apob is not None and apob>130 and final=="Moderate":
     final="High"
 
-st.header("Statin Recommendation")
+st.header("💊 Statin Recommendation")
 if final in ["High","Very High"]:
-    st.success("Statins Recommended")
+    st.success("✅ **Statins Recommended** — High or Very High cardiovascular risk identified")
 elif final:
-    st.warning("Statins Not Mandatory")
+    st.warning("⚠️ **Statins Not Mandatory** — Consider lifestyle modification and re-assessment")
 else:
-    st.info("Insufficient data")
+    st.info("ℹ️ **Insufficient Data** — Complete required fields for risk assessment")
