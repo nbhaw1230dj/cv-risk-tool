@@ -8,7 +8,7 @@ st.markdown("""
 <style>
     /* Main container styling */
     .main {
-        background-color: #f8f9fa;
+        background-color: #f5f7fa;
     }
     
     /* Headers */
@@ -16,67 +16,114 @@ st.markdown("""
         color: #1a365d;
         font-weight: 600;
         border-bottom: 3px solid #2c5282;
-        padding-bottom: 0.5rem;
-        margin-bottom: 1.5rem;
+        padding-bottom: 0.8rem;
+        margin-bottom: 2rem;
+        margin-top: 0;
     }
     
     h2 {
         color: #2d3748;
         font-weight: 600;
+        margin-top: 2.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 5px solid #4299e1;
+        padding-left: 1rem;
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+        background: linear-gradient(90deg, rgba(66, 153, 225, 0.1) 0%, transparent 100%);
+    }
+    
+    h3 {
+        color: #2d3748;
+        font-weight: 600;
         margin-top: 2rem;
         margin-bottom: 1rem;
-        border-left: 4px solid #4299e1;
-        padding-left: 1rem;
+    }
+    
+    /* Input field containers */
+    .stNumberInput {
+        margin-bottom: 0.5rem;
+    }
+    
+    .stNumberInput > div {
+        display: flex;
+        align-items: center;
+    }
+    
+    .stNumberInput > div > div {
+        flex: 1;
+    }
+    
+    /* Checkbox styling for NA */
+    .stCheckbox {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 0;
+        padding-top: 0;
+    }
+    
+    .stCheckbox > label {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 1.8rem;
     }
     
     /* Risk panel cards */
     .risk-card {
-        border-radius: 8px;
+        border-radius: 10px;
         padding: 1.5rem;
         margin: 0.5rem 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
         border: 1px solid #e2e8f0;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .risk-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     }
     
     .risk-low {
         background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-        border-left: 4px solid #28a745;
+        border-left: 5px solid #28a745;
     }
     
     .risk-moderate {
         background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
-        border-left: 4px solid #ffc107;
+        border-left: 5px solid #ffc107;
     }
     
     .risk-high {
-        background: linear-gradient(135deg, #fff3cd 0%, #ffd966 100%);
-        border-left: 4px solid #ff9800;
+        background: linear-gradient(135deg, #ffd6a5 0%, #ffcc80 100%);
+        border-left: 5px solid #ff9800;
     }
     
     .risk-veryhigh {
         background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
-        border-left: 4px solid #dc3545;
+        border-left: 5px solid #dc3545;
     }
     
     .risk-unavailable {
         background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
-        border-left: 4px solid #6c757d;
+        border-left: 5px solid #6c757d;
     }
     
     /* Contributing factors */
     .contributing-factors {
-        background-color: rgba(255,255,255,0.7);
-        border-radius: 6px;
-        padding: 0.75rem;
-        margin-top: 1rem;
+        background-color: rgba(255,255,255,0.8);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1.2rem;
         font-size: 0.9rem;
-        border: 1px solid rgba(0,0,0,0.1);
+        border: 1px solid rgba(0,0,0,0.08);
     }
     
     .factor-title {
         font-weight: 600;
         color: #2d3748;
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.6rem;
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -84,31 +131,41 @@ st.markdown("""
     
     .factor-item {
         color: #4a5568;
-        padding: 0.2rem 0;
-        padding-left: 1rem;
+        padding: 0.3rem 0;
+        padding-left: 1.2rem;
         position: relative;
+        line-height: 1.5;
     }
     
     .factor-item:before {
-        content: "•";
+        content: "▪";
         position: absolute;
         left: 0;
         font-weight: bold;
+        color: #4299e1;
     }
     
     /* Metrics */
     .stMetric {
         background-color: white;
-        padding: 1rem;
-        border-radius: 6px;
+        padding: 1.2rem;
+        border-radius: 8px;
         border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
     /* Input fields */
     .stNumberInput > div > div > input {
         background-color: white;
-        border: 1px solid #cbd5e0;
-        border-radius: 4px;
+        border: 2px solid #cbd5e0;
+        border-radius: 6px;
+        padding: 0.6rem;
+        transition: border-color 0.2s;
+    }
+    
+    .stNumberInput > div > div > input:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
     }
     
     /* Buttons */
@@ -116,43 +173,48 @@ st.markdown("""
         background-color: #2c5282;
         color: white;
         font-weight: 500;
-        border-radius: 6px;
+        border-radius: 8px;
         border: none;
-        padding: 0.5rem 1.5rem;
+        padding: 0.7rem 1.8rem;
         transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(44, 82, 130, 0.2);
     }
     
     .stButton > button:hover {
         background-color: #1a365d;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 8px rgba(44, 82, 130, 0.3);
+        transform: translateY(-1px);
     }
     
     /* Info boxes */
     .stInfo {
         background-color: #e6f3ff;
-        border-left: 4px solid #4299e1;
-        border-radius: 4px;
+        border-left: 5px solid #4299e1;
+        border-radius: 6px;
+        padding: 1rem;
     }
     
     /* Success boxes */
     .stSuccess {
         background-color: #d4edda;
-        border-left: 4px solid #28a745;
-        border-radius: 4px;
+        border-left: 5px solid #28a745;
+        border-radius: 6px;
+        padding: 1rem;
     }
     
     /* Warning boxes */
     .stWarning {
         background-color: #fff3cd;
-        border-left: 4px solid #ffc107;
-        border-radius: 4px;
+        border-left: 5px solid #ffc107;
+        border-radius: 6px;
+        padding: 1rem;
     }
     
     /* Section dividers */
     hr {
         border: none;
         border-top: 2px solid #e2e8f0;
-        margin: 2rem 0;
+        margin: 3rem 0;
     }
     
     /* Checkbox labels */
@@ -160,11 +222,51 @@ st.markdown("""
         font-weight: 500;
         color: #2d3748;
     }
+    
+    /* Radio buttons */
+    .stRadio > div {
+        gap: 1rem;
+    }
+    
+    /* Selectbox */
+    .stSelectbox > div > div {
+        background-color: white;
+        border: 2px solid #cbd5e0;
+        border-radius: 6px;
+    }
+    
+    /* Column spacing */
+    .row-widget.stHorizontal {
+        gap: 1.5rem;
+    }
+    
+    /* Section spacing */
+    .element-container {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Link buttons */
+    .stLinkButton > a {
+        background-color: #2c5282;
+        color: white;
+        padding: 0.7rem 1.8rem;
+        border-radius: 8px;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(44, 82, 130, 0.2);
+    }
+    
+    .stLinkButton > a:hover {
+        background-color: #1a365d;
+        box-shadow: 0 4px 8px rgba(44, 82, 130, 0.3);
+        transform: translateY(-1px);
+    }
 </style>
 """, unsafe_allow_html=True)
 
 def na_number(container, label, default=None, minv=0.0, maxv=500.0, step=1.0, key=None):
-    col1, col2 = container.columns([4,1])
+    col1, col2 = container.columns([5,1])
     minv = float(minv)
     maxv = float(maxv)
     step = float(step)
@@ -454,84 +556,156 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
     risk_10yr = (1 - math.pow(baseline_survival, math.exp(individual_sum - mean_sum))) * 100
     return round(min(risk_10yr, 100), 1)
 
+# ========== APP START ==========
+
 st.title("🫀 Cardiovascular Risk Assessment Tool")
 st.markdown("*Evidence-based risk stratification for clinical decision support*")
+st.markdown("")
 
+# ========== DEMOGRAPHICS ==========
 st.header("Demographics")
-age = na_number(st.container(), "Age", minv=0, maxv=100, key="age")
+st.markdown("")
+
+age = na_number(st.container(), "Age (years)", minv=0, maxv=100, key="age")
+st.markdown("")
+
 colA, colB, colC = st.columns(3)
 sex = colA.selectbox("Sex",["Male","Female"])
 eth = colB.selectbox("Ethnicity",["Indian","South Asian","White","Black","Other"])
+
+st.markdown("")
+
 height = na_number(colA, "Height (cm)", minv=100, maxv=220, key="h")
 weight = na_number(colB, "Weight (kg)", minv=30, maxv=200, key="w")
 bmi=bmi_calc(height,weight)
-colC.metric("BMI", bmi if bmi is not None else "NA")
+colC.metric("BMI (kg/m²)", f"{bmi:.1f}" if bmi is not None else "NA")
 
-st.header("Vitals")
+# ========== VITALS ==========
+st.header("Vital Signs")
+st.markdown("")
+
 col1,col2 = st.columns(2)
-sbp=na_number(col1,"SBP", minv=70, maxv=240, key="sbp")
-dbp=na_number(col2,"DBP", minv=40, maxv=140, key="dbp")
+sbp=na_number(col1,"Systolic BP (mmHg)", minv=70, maxv=240, key="sbp")
+dbp=na_number(col2,"Diastolic BP (mmHg)", minv=40, maxv=140, key="dbp")
 
-st.header("Lipids")
+# ========== LIPIDS ==========
+st.header("Lipid Profile")
+st.markdown("")
+
 r1c1,r1c2 = st.columns(2)
-tc=na_number(r1c1,"Total Cholesterol", minv=0, maxv=400, key="tc")
-ldl=na_number(r1c2,"LDL-C", minv=0, maxv=300, key="ldl")
-r2c1,r2c2 = st.columns(2)
-hdl=na_number(r2c1,"HDL-C", minv=0, maxv=120, key="hdl")
-tg=na_number(r2c2,"Triglycerides", minv=0, maxv=600, key="tg")
-nhdl=non_hdl(tc,hdl)
-st.metric("Non-HDL", nhdl if nhdl is not None else "NA")
-r3c1,r3c2 = st.columns(2)
-apob=na_number(r3c1,"ApoB", minv=0, maxv=200, key="apob")
-apoa1=na_number(r3c2,"ApoA1", minv=0, maxv=250, key="apoa1")
-apo_ratio=ratio(apob,apoa1)
-st.metric("ApoB/ApoA1 ratio", apo_ratio if apo_ratio is not None else "NA")
-lpa=na_number(st.container(),"Lp(a)", minv=0, maxv=300, key="lpa")
+tc=na_number(r1c1,"Total Cholesterol (mg/dL)", minv=0, maxv=400, key="tc")
+ldl=na_number(r1c2,"LDL Cholesterol (mg/dL)", minv=0, maxv=300, key="ldl")
 
-st.header("Diabetes")
+st.markdown("")
+
+r2c1,r2c2 = st.columns(2)
+hdl=na_number(r2c1,"HDL Cholesterol (mg/dL)", minv=0, maxv=120, key="hdl")
+tg=na_number(r2c2,"Triglycerides (mg/dL)", minv=0, maxv=600, key="tg")
+
+st.markdown("")
+nhdl=non_hdl(tc,hdl)
+st.metric("Non-HDL Cholesterol (mg/dL)", f"{nhdl:.1f}" if nhdl is not None else "NA")
+
+st.markdown("")
+st.markdown("**Advanced Lipid Markers**")
+st.markdown("")
+
+r3c1,r3c2 = st.columns(2)
+apob=na_number(r3c1,"Apolipoprotein B (mg/dL)", minv=0, maxv=200, key="apob")
+apoa1=na_number(r3c2,"Apolipoprotein A1 (mg/dL)", minv=0, maxv=250, key="apoa1")
+
+st.markdown("")
+apo_ratio=ratio(apob,apoa1)
+st.metric("ApoB/ApoA1 Ratio", f"{apo_ratio:.2f}" if apo_ratio is not None else "NA")
+
+st.markdown("")
+lpa=na_number(st.container(),"Lipoprotein(a) (mg/dL)", minv=0, maxv=300, key="lpa")
+
+# ========== DIABETES ==========
+st.header("Diabetes Status")
+st.markdown("")
+
 diabetes=st.radio("Diabetes",["No","Yes"])
+st.markdown("")
+
 if diabetes=="Yes":
-    duration=na_number(st.container(),"Duration (years)", minv=0, maxv=50, key="dm_dur")
-    treatment=st.radio("Treatment",["Oral","Insulin"])
+    duration=na_number(st.container(),"Diabetes Duration (years)", minv=0, maxv=50, key="dm_dur")
+    st.markdown("")
+    treatment=st.radio("Current Treatment",["Oral","Insulin"])
 else:
     duration=None
     treatment=None
 
-st.header("Smoking")
-smoke=st.selectbox("Smoking",["Never","Former","Current"])
+# ========== SMOKING ==========
+st.header("Smoking History")
+st.markdown("")
 
+smoke=st.selectbox("Smoking Status",["Never","Former","Current"])
+
+# ========== MEDICAL HISTORY ==========
 st.header("Medical History")
-none_hist=st.checkbox("None of the above",key="hist_none")
-mi=st.checkbox("MI",disabled=none_hist)
-stroke=st.checkbox("Stroke/TIA",disabled=none_hist)
-pad=st.checkbox("PAD",disabled=none_hist)
-revasc=st.checkbox("Revascularization",disabled=none_hist)
-ckd=st.checkbox("CKD",disabled=none_hist)
-hf=st.checkbox("Heart failure",disabled=none_hist)
-nafld=st.checkbox("NAFLD",disabled=none_hist)
-mets=st.checkbox("Metabolic syndrome",disabled=none_hist)
-atrial_fib=st.checkbox("Atrial fibrillation",disabled=none_hist)
-rheumatoid_arthritis=st.checkbox("Rheumatoid arthritis",disabled=none_hist)
-migraine=st.checkbox("Migraine",disabled=none_hist)
+st.markdown("")
+
+none_hist=st.checkbox("None of the following",key="hist_none")
+st.markdown("")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    mi=st.checkbox("Myocardial Infarction",disabled=none_hist)
+    stroke=st.checkbox("Stroke/TIA",disabled=none_hist)
+    pad=st.checkbox("Peripheral Artery Disease",disabled=none_hist)
+    revasc=st.checkbox("Revascularization",disabled=none_hist)
+
+with col2:
+    ckd=st.checkbox("Chronic Kidney Disease",disabled=none_hist)
+    hf=st.checkbox("Heart Failure",disabled=none_hist)
+    nafld=st.checkbox("NAFLD",disabled=none_hist)
+    mets=st.checkbox("Metabolic Syndrome",disabled=none_hist)
+
+with col3:
+    atrial_fib=st.checkbox("Atrial Fibrillation",disabled=none_hist)
+    rheumatoid_arthritis=st.checkbox("Rheumatoid Arthritis",disabled=none_hist)
+    migraine=st.checkbox("Migraine",disabled=none_hist)
+
 ascvd = mi or stroke or pad or revasc
 
+# ========== FAMILY HISTORY ==========
 st.header("Family History")
-st.write("Premature ASCVD = Male <55, Female <65 in first-degree relatives")
-none_fh=st.checkbox("None of the above",key="fh_none")
-prem_ascvd=st.checkbox("Premature ASCVD in first-degree relatives",disabled=none_fh)
-fh_dm=st.checkbox("Diabetes",disabled=none_fh)
-fh_htn=st.checkbox("Hypertension",disabled=none_fh)
-fh_fh=st.checkbox("Familial Hypercholesterolemia",disabled=none_fh)
+st.caption("Premature ASCVD = Male <55, Female <65 in first-degree relatives")
+st.markdown("")
 
-st.header("Medications")
-none_med=st.checkbox("None of the above",key="med_none")
-statin=st.checkbox("Statin",disabled=none_med)
-antihtn=st.checkbox("Antihypertensive",disabled=none_med)
-antidm=st.checkbox("Antidiabetic",disabled=none_med)
-antiplate=st.checkbox("Antiplatelet",disabled=none_med)
+none_fh=st.checkbox("None of the following",key="fh_none")
+st.markdown("")
 
+col1, col2 = st.columns(2)
+with col1:
+    prem_ascvd=st.checkbox("Premature ASCVD in first-degree relatives",disabled=none_fh)
+    fh_dm=st.checkbox("Family History of Diabetes",disabled=none_fh)
+
+with col2:
+    fh_htn=st.checkbox("Family History of Hypertension",disabled=none_fh)
+    fh_fh=st.checkbox("Familial Hypercholesterolemia",disabled=none_fh)
+
+# ========== MEDICATIONS ==========
+st.header("Current Medications")
+st.markdown("")
+
+none_med=st.checkbox("None of the following",key="med_none")
+st.markdown("")
+
+col1, col2 = st.columns(2)
+with col1:
+    statin=st.checkbox("Statin",disabled=none_med)
+    antihtn=st.checkbox("Antihypertensive",disabled=none_med)
+
+with col2:
+    antidm=st.checkbox("Antidiabetic",disabled=none_med)
+    antiplate=st.checkbox("Antiplatelet",disabled=none_med)
+
+# ========== CALCULATIONS ==========
 st.markdown("---")
 st.header("📊 Calculated Risk Scores")
+st.markdown("")
 
 tc_hdl_ratio = ratio(tc, hdl)
 qrisk = calculate_qrisk3(age, sex, eth, smoke, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, migraine)
@@ -542,24 +716,30 @@ with col1:
     if qrisk is not None:
         st.metric("QRISK3 (10-year CVD risk)", f"{qrisk}%")
     else:
-        st.info("QRISK3: Not calculable (age 25-84 required, check inputs)")
+        st.info("QRISK3: Not calculable — requires age 25-84 and complete inputs")
+
 with col2:
     if aha is not None:
         st.metric("AHA PREVENT (10-year ASCVD risk)", f"{aha}%")
     else:
-        st.info("AHA PREVENT: Not calculable (age 40-79 required, check inputs)")
+        st.info("AHA PREVENT: Not calculable — requires age 40-79 and complete inputs")
 
 qrisk_cat = percent_category(qrisk)
 aha_cat = percent_category(aha)
 
+st.markdown("")
 st.markdown("---")
+
 st.subheader("🔗 Verify with Official Calculators")
+st.markdown("")
+
 col1, col2 = st.columns(2)
 with col1:
     st.link_button("Open QRISK3 Calculator","https://qrisk.org/three/")
 with col2:
     st.link_button("Open AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
 
+# ========== LAI CALCULATION ==========
 risk_enhancers = (smoke=="Current") or mets or fh_fh or (lpa is not None and lpa>50) or (apob is not None and apob>130)
 if ascvd or ckd or (diabetes=="Yes" and duration is not None and duration>=10):
     lai="Very High"
@@ -570,8 +750,10 @@ elif prem_ascvd or fh_dm or fh_htn:
 else:
     lai="Low"
 
+# ========== RISK PANEL ==========
 st.markdown("---")
 st.header("🎯 Risk Stratification Panel")
+st.markdown("")
 
 cols=st.columns(3)
 
@@ -623,20 +805,27 @@ with cols[2]:
     else:
         st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">LAI Risk</h3><p style="margin:0.5rem 0;">Unavailable</p></div>', unsafe_allow_html=True)
 
+# ========== STATIN RECOMMENDATION ==========
 st.markdown("---")
+st.header("💊 Statin Recommendation")
+st.markdown("")
 
 levels=["Low","Moderate","High","Very High"]
 cats=[c for c in [aha_cat,qrisk_cat,lai] if c]
 final = max(cats,key=lambda x:levels.index(x)) if cats else None
+
 if final=="Moderate" and eth in ["Indian","South Asian"]:
     final="High"
 if diabetes=="Yes" and apob is not None and apob>130 and final=="Moderate":
     final="High"
 
-st.header("💊 Statin Recommendation")
 if final in ["High","Very High"]:
     st.success("✅ **Statins Recommended** — High or Very High cardiovascular risk identified")
 elif final:
-    st.warning("⚠️ **Statins Not Mandatory** — Consider lifestyle modification and re-assessment")
+    st.warning("⚠️ **Statins Not Mandatory** — Consider lifestyle modification and periodic re-assessment")
 else:
-    st.info("ℹ️ **Insufficient Data** — Complete required fields for risk assessment")
+    st.info("ℹ️ **Insufficient Data** — Complete required fields for comprehensive risk assessment")
+
+st.markdown("")
+st.markdown("---")
+st.caption("*This tool is intended for clinical decision support. All treatment decisions should be made in consultation with the patient and consider individual circumstances.*")
