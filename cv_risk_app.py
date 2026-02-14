@@ -532,68 +532,11 @@ def get_lai_recommendations(lai_cat):
         }
 
 def generate_ai_summary(aha_cat, qrisk_cat, lai_cat, aha_risk, qrisk_risk, ethnicity, age, diabetes, apob):
-    """Generate AI-powered unified recommendation summary"""
-    
-    # Prepare the context for AI
-    prompt = f"""You are a cardiovascular disease risk assessment expert. Based on the following three validated risk assessment tools, provide a unified, evidence-based treatment recommendation:
-
-**Patient Profile:**
-- Age: {age if age else 'Not provided'}
-- Ethnicity: {ethnicity}
-- Diabetes: {diabetes}
-- ApoB: {apob if apob else 'Not measured'} mg/dL
-
-**Risk Assessment Results:**
-1. AHA PREVENT (10-year ASCVD risk): {aha_cat if aha_cat else 'Not calculable'} ({aha_risk}% if calculable)
-2. QRISK3 (10-year CVD risk): {qrisk_cat if qrisk_cat else 'Not calculable'} ({qrisk_risk}% if calculable)
-3. LAI 2023 (India-specific): {lai_cat}
-
-**Individual Recommendations:**
-
-AHA PREVENT Recommendations:
-{json.dumps(get_aha_recommendations(aha_cat, aha_risk) if aha_cat else {"note": "Not calculable"}, indent=2)}
-
-QRISK3 Recommendations:
-{json.dumps(get_qrisk_recommendations(qrisk_cat, qrisk_risk) if qrisk_cat else {"note": "Not calculable"}, indent=2)}
-
-LAI 2023 Recommendations:
-{json.dumps(get_lai_recommendations(lai_cat), indent=2)}
-
-**Task:**
-Provide a clear, unified clinical recommendation that:
-1. Synthesizes all three assessments
-2. Provides specific statin therapy recommendation (drug, dose)
-3. Specifies LDL-C and non-HDL-C targets
-4. Addresses lifestyle modifications specific to Indian/South Asian patients
-5. Outlines monitoring strategy
-6. Explains any discrepancies between the three scores
-7. Keeps the response concise (4-6 bullet points)
-
-Focus on actionable clinical guidance for the treating physician."""
-
-    try:
-        response = fetch("https://api.anthropic.com/v1/messages", {
-            "method": "POST",
-            "headers": {
-                "Content-Type": "application/json",
-            },
-            "body": JSON.stringify({
-                "model": "claude-sonnet-4-20250514",
-                "max_tokens": 1000,
-                "messages": [
-                    {"role": "user", "content": prompt}
-                ],
-            })
-        })
-        
-        data = await response.json()
-        if data.content and len(data.content) > 0:
-            return data.content[0].text
-        else:
-            return "Unable to generate AI summary at this time."
-    except:
-        # Fallback if AI is not available
-        return generate_fallback_summary(aha_cat, qrisk_cat, lai_cat)
+    """
+    AI summary disabled in offline Streamlit mode.
+    We safely fall back to deterministic guideline summary.
+    """
+    return generate_fallback_summary(aha_cat, qrisk_cat, lai_cat)
 
 def generate_fallback_summary(aha_cat, qrisk_cat, lai_cat):
     """Generate a rule-based summary if AI is unavailable"""
