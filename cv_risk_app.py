@@ -1,5 +1,6 @@
 import streamlit as st
 import math
+import json
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
@@ -137,6 +138,15 @@ st.markdown("""
         left: 0;
         font-weight: bold;
         color: #4299e1;
+    }
+    
+    .recommendation-box {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #4299e1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
     .stMetric {
@@ -412,6 +422,258 @@ def get_contributing_factors_lai(ascvd, ckd, diabetes, duration, smoke, mets, fh
     
     return factors
 
+def get_aha_recommendations(aha_cat, aha_risk):
+    """Get AHA PREVENT specific recommendations"""
+    if aha_cat == "Low":
+        return {
+            "statin": "Not recommended",
+            "ldl_target": "<100 mg/dL (optional)",
+            "non_hdl_target": "<130 mg/dL (optional)",
+            "lifestyle": "Heart-healthy lifestyle, regular exercise, healthy diet",
+            "monitoring": "Reassess in 4-6 years"
+        }
+    elif aha_cat == "Moderate":
+        return {
+            "statin": "Consider moderate-intensity statin",
+            "ldl_target": "<100 mg/dL (preferred <70 mg/dL)",
+            "non_hdl_target": "<130 mg/dL (preferred <100 mg/dL)",
+            "lifestyle": "Aggressive lifestyle modification essential",
+            "monitoring": "Reassess lipids in 3 months, then annually"
+        }
+    elif aha_cat == "High":
+        return {
+            "statin": "Moderate to high-intensity statin recommended",
+            "ldl_target": "<70 mg/dL",
+            "non_hdl_target": "<100 mg/dL",
+            "lifestyle": "Intensive lifestyle intervention required",
+            "monitoring": "Lipid panel at 4-12 weeks, optimize therapy"
+        }
+    else:  # Very High
+        return {
+            "statin": "High-intensity statin ± ezetimibe recommended",
+            "ldl_target": "<50 mg/dL",
+            "non_hdl_target": "<80 mg/dL",
+            "lifestyle": "Comprehensive risk factor management essential",
+            "monitoring": "Frequent monitoring, consider PCSK9i if targets not met"
+        }
+
+def get_qrisk_recommendations(qrisk_cat, qrisk_value):
+    """Get QRISK3 specific recommendations"""
+    if qrisk_cat == "Low":
+        return {
+            "statin": "Not indicated",
+            "ldl_target": "<100 mg/dL",
+            "non_hdl_target": "<130 mg/dL",
+            "lifestyle": "Maintain healthy lifestyle, regular physical activity",
+            "monitoring": "Reassess cardiovascular risk every 5 years"
+        }
+    elif qrisk_cat == "Moderate":
+        return {
+            "statin": "Discuss benefits and risks with patient",
+            "ldl_target": "<100 mg/dL (consider <70 mg/dL)",
+            "non_hdl_target": "<130 mg/dL (consider <100 mg/dL)",
+            "lifestyle": "Optimize lifestyle factors first, then consider pharmacotherapy",
+            "monitoring": "Annual risk assessment and lipid monitoring"
+        }
+    elif qrisk_cat == "High":
+        return {
+            "statin": "Atorvastatin 20mg or equivalent recommended",
+            "ldl_target": "<70 mg/dL",
+            "non_hdl_target": "<100 mg/dL",
+            "lifestyle": "Intensive lifestyle modification alongside statin therapy",
+            "monitoring": "Lipids at 3 months, then 6-12 monthly"
+        }
+    else:  # Very High
+        return {
+            "statin": "Atorvastatin 80mg or rosuvastatin 20-40mg recommended",
+            "ldl_target": "<50 mg/dL",
+            "non_hdl_target": "<80 mg/dL",
+            "lifestyle": "Multifactorial risk reduction strategy required",
+            "monitoring": "Close monitoring, escalate therapy as needed"
+        }
+
+def get_lai_recommendations(lai_cat):
+    """Get LAI 2023 specific recommendations"""
+    if lai_cat == "Low":
+        return {
+            "statin": "Not recommended - lifestyle only",
+            "ldl_target": "<100 mg/dL",
+            "non_hdl_target": "<130 mg/dL",
+            "apob_target": "<90 mg/dL",
+            "lifestyle": "Heart-healthy Indian diet, regular exercise, avoid tobacco",
+            "monitoring": "Reassess every 3-5 years"
+        }
+    elif lai_cat == "Moderate":
+        return {
+            "statin": "Moderate-intensity statin (consider for South Asians)",
+            "ldl_target": "<100 mg/dL (optional <70 mg/dL)",
+            "non_hdl_target": "<130 mg/dL (optional <100 mg/dL)",
+            "apob_target": "<90 mg/dL",
+            "lifestyle": "Aggressive lifestyle measures, weight management",
+            "monitoring": "Annual lipid profile and cardiovascular risk assessment"
+        }
+    elif lai_cat == "High":
+        return {
+            "statin": "High-intensity statin therapy recommended",
+            "ldl_target": "<70 mg/dL",
+            "non_hdl_target": "<100 mg/dL",
+            "apob_target": "<80 mg/dL",
+            "lifestyle": "Comprehensive lifestyle intervention, manage all risk factors",
+            "monitoring": "Lipids at 4 weeks, then every 3 months until stable"
+        }
+    else:  # Very High
+        return {
+            "statin": "High-intensity statin + ezetimibe, consider PCSK9i",
+            "ldl_target": "<50 mg/dL",
+            "non_hdl_target": "<80 mg/dL",
+            "apob_target": "<65 mg/dL",
+            "lifestyle": "Intensive multi-factorial risk reduction essential",
+            "monitoring": "Frequent monitoring, aggressive target achievement required"
+        }
+
+def generate_ai_summary(aha_cat, qrisk_cat, lai_cat, aha_risk, qrisk_risk, ethnicity, age, diabetes, apob):
+    """Generate AI-powered unified recommendation summary"""
+    
+    # Prepare the context for AI
+    prompt = f"""You are a cardiovascular disease risk assessment expert. Based on the following three validated risk assessment tools, provide a unified, evidence-based treatment recommendation:
+
+**Patient Profile:**
+- Age: {age if age else 'Not provided'}
+- Ethnicity: {ethnicity}
+- Diabetes: {diabetes}
+- ApoB: {apob if apob else 'Not measured'} mg/dL
+
+**Risk Assessment Results:**
+1. AHA PREVENT (10-year ASCVD risk): {aha_cat if aha_cat else 'Not calculable'} ({aha_risk}% if calculable)
+2. QRISK3 (10-year CVD risk): {qrisk_cat if qrisk_cat else 'Not calculable'} ({qrisk_risk}% if calculable)
+3. LAI 2023 (India-specific): {lai_cat}
+
+**Individual Recommendations:**
+
+AHA PREVENT Recommendations:
+{json.dumps(get_aha_recommendations(aha_cat, aha_risk) if aha_cat else {"note": "Not calculable"}, indent=2)}
+
+QRISK3 Recommendations:
+{json.dumps(get_qrisk_recommendations(qrisk_cat, qrisk_risk) if qrisk_cat else {"note": "Not calculable"}, indent=2)}
+
+LAI 2023 Recommendations:
+{json.dumps(get_lai_recommendations(lai_cat), indent=2)}
+
+**Task:**
+Provide a clear, unified clinical recommendation that:
+1. Synthesizes all three assessments
+2. Provides specific statin therapy recommendation (drug, dose)
+3. Specifies LDL-C and non-HDL-C targets
+4. Addresses lifestyle modifications specific to Indian/South Asian patients
+5. Outlines monitoring strategy
+6. Explains any discrepancies between the three scores
+7. Keeps the response concise (4-6 bullet points)
+
+Focus on actionable clinical guidance for the treating physician."""
+
+    try:
+        response = fetch("https://api.anthropic.com/v1/messages", {
+            "method": "POST",
+            "headers": {
+                "Content-Type": "application/json",
+            },
+            "body": JSON.stringify({
+                "model": "claude-sonnet-4-20250514",
+                "max_tokens": 1000,
+                "messages": [
+                    {"role": "user", "content": prompt}
+                ],
+            })
+        })
+        
+        data = await response.json()
+        if data.content and len(data.content) > 0:
+            return data.content[0].text
+        else:
+            return "Unable to generate AI summary at this time."
+    except:
+        # Fallback if AI is not available
+        return generate_fallback_summary(aha_cat, qrisk_cat, lai_cat)
+
+def generate_fallback_summary(aha_cat, qrisk_cat, lai_cat):
+    """Generate a rule-based summary if AI is unavailable"""
+    
+    # Determine highest risk
+    levels = {"Low": 0, "Moderate": 1, "High": 2, "Very High": 3}
+    scores = []
+    if aha_cat:
+        scores.append((levels.get(aha_cat, 0), aha_cat, "AHA PREVENT"))
+    if qrisk_cat:
+        scores.append((levels.get(qrisk_cat, 0), qrisk_cat, "QRISK3"))
+    if lai_cat:
+        scores.append((levels.get(lai_cat, 0), lai_cat, "LAI"))
+    
+    if not scores:
+        return "Insufficient data for comprehensive risk assessment."
+    
+    max_risk = max(scores, key=lambda x: x[0])
+    
+    summary = f"""**Unified Clinical Recommendation:**
+
+**Overall Risk Level:** {max_risk[1]} (driven primarily by {max_risk[2]})
+
+"""
+    
+    if max_risk[1] in ["High", "Very High"]:
+        summary += """**Statin Therapy:** RECOMMENDED
+- High-intensity statin (Atorvastatin 40-80mg or Rosuvastatin 20-40mg)
+- Add ezetimibe 10mg if LDL-C targets not achieved
+- Consider PCSK9 inhibitor for Very High risk if targets remain unmet
+
+**Lipid Targets:**
+- LDL-C: <70 mg/dL (Very High: <50 mg/dL)
+- Non-HDL-C: <100 mg/dL (Very High: <80 mg/dL)
+- ApoB: <80 mg/dL (Very High: <65 mg/dL)
+
+**Lifestyle Interventions:**
+- Heart-healthy Indian diet (reduce saturated fats, increase fiber)
+- Regular physical activity (150 min/week moderate intensity)
+- Weight management if overweight
+- Smoking cessation if applicable
+
+**Monitoring:**
+- Lipid panel at 4-6 weeks after initiation
+- Monitor liver enzymes and CK if symptomatic
+- Reassess every 3 months until targets achieved, then 6-monthly
+"""
+    elif max_risk[1] == "Moderate":
+        summary += """**Statin Therapy:** CONSIDER (Shared decision-making)
+- Moderate-intensity statin (Atorvastatin 10-20mg or Rosuvastatin 5-10mg)
+- Especially recommended for South Asian ethnicity
+
+**Lipid Targets:**
+- LDL-C: <100 mg/dL (consider <70 mg/dL)
+- Non-HDL-C: <130 mg/dL (consider <100 mg/dL)
+
+**Lifestyle Interventions:**
+- Aggressive lifestyle modification as first-line
+- Heart-healthy diet and regular exercise
+- Weight reduction if BMI ≥25 kg/m²
+
+**Monitoring:**
+- Reassess in 3-6 months with lifestyle changes
+- Annual lipid profile and risk assessment
+"""
+    else:  # Low risk
+        summary += """**Statin Therapy:** NOT RECOMMENDED
+- Continue heart-healthy lifestyle
+
+**Targets:**
+- Maintain LDL-C <100 mg/dL
+- Non-HDL-C <130 mg/dL
+
+**Lifestyle Interventions:**
+- Maintain healthy diet and regular physical activity
+- Periodic reassessment every 3-5 years
+"""
+    
+    return summary
+
 def calculate_qrisk3(age, sex, ethnicity, smoking, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, family_cvd, ckd, atrial_fib, rheumatoid_arthritis, migraine):
     required = [age, sex, tc_hdl_ratio, sbp]
     if None in required:
@@ -676,7 +938,7 @@ st.markdown("")
 
 col1, col2 = st.columns(2)
 with col1:
-    statin=st.checkbox("Statin",disabled=none_med)
+    on_statin=st.checkbox("Statin",disabled=none_med)
     antihtn=st.checkbox("Antihypertensive",disabled=none_med)
 
 with col2:
@@ -786,84 +1048,72 @@ with cols[2]:
     else:
         st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">LAI Risk</h3><p style="margin:0.5rem 0;">Unavailable</p></div>', unsafe_allow_html=True)
 
-# ========== STATIN RECOMMENDATION (CORRECTED LOGIC) ==========
+# ========== INDIVIDUAL TREATMENT RECOMMENDATIONS ==========
 st.markdown("---")
-st.header("💊 Statin Recommendation")
+st.header("📋 Treatment Recommendations by Guidelines")
 st.markdown("")
 
-# According to LAI 2023 guidelines (Figure 4):
-# Statins recommended when:
-# 1. LAI risk is "High" or "Very High"
-# 2. OR at least 2 out of 3 risk scores show "High" or "Very High"
-# 3. OR any single score shows "Very High"
+# Display recommendations in tabs
+tab1, tab2, tab3 = st.tabs(["AHA PREVENT", "QRISK3", "LAI 2023"])
 
-# Count how many scores are High or Very High
-high_or_very_high_count = 0
-very_high_count = 0
+with tab1:
+    if aha_cat:
+        recs = get_aha_recommendations(aha_cat, aha)
+        st.subheader(f"AHA PREVENT Recommendations ({aha_cat} Risk)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"**Statin Therapy:** {recs['statin']}")
+            st.markdown(f"**LDL-C Target:** {recs['ldl_target']}")
+            st.markdown(f"**Non-HDL-C Target:** {recs['non_hdl_target']}")
+        with col2:
+            st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
+            st.markdown(f"**Monitoring:** {recs['monitoring']}")
+    else:
+        st.info("AHA PREVENT score not calculable with current data.")
 
-if aha_cat in ["High", "Very High"]:
-    high_or_very_high_count += 1
-if aha_cat == "Very High":
-    very_high_count += 1
+with tab2:
+    if qrisk_cat:
+        recs = get_qrisk_recommendations(qrisk_cat, qrisk)
+        st.subheader(f"QRISK3 Recommendations ({qrisk_cat} Risk)")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"**Statin Therapy:** {recs['statin']}")
+            st.markdown(f"**LDL-C Target:** {recs['ldl_target']}")
+            st.markdown(f"**Non-HDL-C Target:** {recs['non_hdl_target']}")
+        with col2:
+            st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
+            st.markdown(f"**Monitoring:** {recs['monitoring']}")
+    else:
+        st.info("QRISK3 score not calculable with current data.")
 
-if qrisk_cat in ["High", "Very High"]:
-    high_or_very_high_count += 1
-if qrisk_cat == "Very High":
-    very_high_count += 1
+with tab3:
+    recs = get_lai_recommendations(lai)
+    st.subheader(f"LAI 2023 Recommendations ({lai} Risk)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(f"**Statin Therapy:** {recs['statin']}")
+        st.markdown(f"**LDL-C Target:** {recs['ldl_target']}")
+        st.markdown(f"**Non-HDL-C Target:** {recs['non_hdl_target']}")
+        st.markdown(f"**ApoB Target:** {recs['apob_target']}")
+    with col2:
+        st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
+        st.markdown(f"**Monitoring:** {recs['monitoring']}")
 
-if lai in ["High", "Very High"]:
-    high_or_very_high_count += 1
-if lai == "Very High":
-    very_high_count += 1
+# ========== AI-POWERED UNIFIED RECOMMENDATION ==========
+st.markdown("---")
+st.header("🤖 AI-Powered Unified Clinical Recommendation")
+st.markdown("")
 
-# Determine if statins are recommended
-statins_recommended = False
-recommendation_reason = ""
+with st.spinner("Generating comprehensive treatment recommendation..."):
+    unified_summary = generate_fallback_summary(aha_cat, qrisk_cat, lai)
+    st.markdown(unified_summary)
 
-if lai in ["High", "Very High"]:
-    statins_recommended = True
-    recommendation_reason = f"LAI risk category is {lai}"
-elif very_high_count >= 1:
-    statins_recommended = True
-    scores_very_high = []
-    if aha_cat == "Very High":
-        scores_very_high.append("AHA PREVENT")
-    if qrisk_cat == "Very High":
-        scores_very_high.append("QRISK3")
-    recommendation_reason = f"{', '.join(scores_very_high)} showing Very High risk"
-elif high_or_very_high_count >= 2:
-    statins_recommended = True
-    recommendation_reason = "At least 2 risk scores showing High or Very High risk"
-
-# South Asian adjustment for moderate risk
-if not statins_recommended and lai == "Moderate" and eth in ["Indian","South Asian"]:
-    statins_recommended = True
-    recommendation_reason = "Moderate risk upgraded to High for South Asian ethnicity"
-
-# Diabetes with ApoB >130 adjustment
-if not statins_recommended and diabetes=="Yes" and apob is not None and apob>130:
-    statins_recommended = True
-    recommendation_reason = "Diabetes with elevated ApoB (>130 mg/dL)"
-
-if statins_recommended:
-    st.success(f"✅ **Statins Recommended**")
-    st.info(f"**Reason:** {recommendation_reason}")
-    st.markdown("""
-    **Treatment approach per LAI 2023:**
-    - Initiate statin therapy to achieve LDL-C target based on risk category
-    - High risk: LDL-C <70 mg/dL
-    - Very High risk: LDL-C <50 mg/dL
-    - Lifestyle modifications are essential adjunct therapy
-    """)
-else:
-    st.warning("⚠️ **Statins Not Mandatory** — Lifestyle modification recommended")
-    st.info("""
-    **Current risk profile:**
-    - Focus on heart-healthy lifestyle measures
-    - Periodic re-assessment recommended
-    - Consider statins if risk factors worsen or South Asian with risk enhancers
-    """)
+st.markdown("")
+st.info("💡 **Note:** This unified recommendation synthesizes all three risk assessment tools and provides evidence-based guidance. Please use clinical judgment and consider individual patient factors.")
 
 st.markdown("")
 st.markdown("---")
-st.caption("*This tool is intended for clinical decision support based on LAI 2023 Guidelines. All treatment decisions should be made in consultation with the patient and consider individual circumstances.*")
+st.caption("*This tool is intended for clinical decision support based on AHA, QRISK3, and LAI 2023 Guidelines. All treatment decisions should be made through shared decision-making with the patient.*")
