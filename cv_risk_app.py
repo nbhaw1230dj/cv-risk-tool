@@ -2,6 +2,21 @@ import streamlit as st
 import math
 import json
 
+st.set_page_config(page_title="CV Risk Tool", layout="centered")
+
+st.markdown(
+    """
+    <meta name="color-scheme" content="light">
+    <style>
+        html, body, [class*="css"]  {
+            background-color: white !important;
+            color: black !important;
+        }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 st.set_page_config(
     layout="wide", 
     page_title="🫀 Cardiovascular Risk Assessment Tool",
