@@ -4,22 +4,26 @@ import json
 
 st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
 
-# Custom CSS for medical-grade UI with dark mode support
+# Custom CSS for medical-grade UI - Light mode only
 st.markdown("""
 <style>
+    /* Force light mode */
+    .stApp {
+        background-color: #f5f7fa;
+        color: #2d3748;
+    }
+    
     .main {
         background-color: #f5f7fa;
     }
     
-    /* Dark mode support */
-    @media (prefers-color-scheme: dark) {
-        .main {
-            background-color: #0e1117;
-        }
+    /* Ensure all text is dark on light background */
+    .stApp * {
+        color: #2d3748;
     }
     
     h1 {
-        color: #1a365d;
+        color: #1a365d !important;
         font-weight: 600;
         border-bottom: 3px solid #2c5282;
         padding-bottom: 0.8rem;
@@ -27,14 +31,8 @@ st.markdown("""
         margin-top: 0;
     }
     
-    @media (prefers-color-scheme: dark) {
-        h1 {
-            color: #90cdf4;
-        }
-    }
-    
     h2 {
-        color: #2d3748;
+        color: #2d3748 !important;
         font-weight: 600;
         margin-top: 2.5rem;
         margin-bottom: 1.5rem;
@@ -45,24 +43,11 @@ st.markdown("""
         background: linear-gradient(90deg, rgba(66, 153, 225, 0.1) 0%, transparent 100%);
     }
     
-    @media (prefers-color-scheme: dark) {
-        h2 {
-            color: #e2e8f0;
-            background: linear-gradient(90deg, rgba(66, 153, 225, 0.2) 0%, transparent 100%);
-        }
-    }
-    
     h3 {
-        color: #2d3748;
+        color: #2d3748 !important;
         font-weight: 600;
         margin-top: 2rem;
         margin-bottom: 1rem;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        h3 {
-            color: #e2e8f0;
-        }
     }
     
     .stNumberInput {
@@ -91,12 +76,7 @@ st.markdown("""
         align-items: center;
         justify-content: center;
         margin-top: 1.8rem;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stCheckbox label {
-            color: #e2e8f0;
-        }
+        color: #2d3748 !important;
     }
     
     .risk-card {
@@ -113,26 +93,9 @@ st.markdown("""
         box-shadow: 0 6px 12px rgba(0,0,0,0.1);
     }
     
-    @media (prefers-color-scheme: dark) {
-        .risk-card {
-            border: 1px solid #2d3748;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        
-        .risk-card:hover {
-            box-shadow: 0 6px 12px rgba(0,0,0,0.5);
-        }
-    }
-    
     .risk-low {
         background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
         border-left: 5px solid #28a745;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .risk-low {
-            background: linear-gradient(135deg, #1a4d2e 0%, #2d5f3f 100%);
-        }
     }
     
     .risk-moderate {
@@ -140,21 +103,9 @@ st.markdown("""
         border-left: 5px solid #ffc107;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .risk-moderate {
-            background: linear-gradient(135deg, #5c4a1f 0%, #6d5d28 100%);
-        }
-    }
-    
     .risk-high {
         background: linear-gradient(135deg, #ffd6a5 0%, #ffcc80 100%);
         border-left: 5px solid #ff9800;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .risk-high {
-            background: linear-gradient(135deg, #6b3e1a 0%, #7d4f26 100%);
-        }
     }
     
     .risk-veryhigh {
@@ -162,21 +113,9 @@ st.markdown("""
         border-left: 5px solid #dc3545;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .risk-veryhigh {
-            background: linear-gradient(135deg, #5c1f1f 0%, #6d2b2b 100%);
-        }
-    }
-    
     .risk-unavailable {
         background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
         border-left: 5px solid #6c757d;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .risk-unavailable {
-            background: linear-gradient(135deg, #1a1d23 0%, #262a33 100%);
-        }
     }
     
     .contributing-factors {
@@ -188,40 +127,21 @@ st.markdown("""
         border: 1px solid rgba(0,0,0,0.08);
     }
     
-    @media (prefers-color-scheme: dark) {
-        .contributing-factors {
-            background-color: rgba(30,35,45,0.8);
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-    }
-    
     .factor-title {
         font-weight: 600;
-        color: #2d3748;
+        color: #2d3748 !important;
         margin-bottom: 0.6rem;
         font-size: 0.85rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .factor-title {
-            color: #cbd5e0;
-        }
-    }
-    
     .factor-item {
-        color: #4a5568;
+        color: #4a5568 !important;
         padding: 0.3rem 0;
         padding-left: 1.2rem;
         position: relative;
         line-height: 1.5;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .factor-item {
-            color: #a0aec0;
-        }
     }
     
     .factor-item:before {
@@ -241,44 +161,29 @@ st.markdown("""
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    @media (prefers-color-scheme: dark) {
-        .recommendation-box {
-            background-color: #1a202c;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-    }
-    
     .stMetric {
-        background-color: white;
+        background-color: white !important;
         padding: 1.2rem;
         border-radius: 8px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
-    @media (prefers-color-scheme: dark) {
-        .stMetric {
-            background-color: #1a202c;
-            border: 1px solid #2d3748;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
+    .stMetric label {
+        color: #2d3748 !important;
+    }
+    
+    .stMetric [data-testid="stMetricValue"] {
+        color: #1a365d !important;
     }
     
     .stNumberInput > div > div > input {
-        background-color: white;
+        background-color: white !important;
         border: 2px solid #cbd5e0;
         border-radius: 6px;
         padding: 0.6rem;
         transition: border-color 0.2s;
-        color: #2d3748;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stNumberInput > div > div > input {
-            background-color: #1a202c;
-            border: 2px solid #4a5568;
-            color: #e2e8f0;
-        }
+        color: #2d3748 !important;
     }
     
     .stNumberInput > div > div > input:focus {
@@ -287,8 +192,8 @@ st.markdown("""
     }
     
     .stButton > button {
-        background-color: #2c5282;
-        color: white;
+        background-color: #2c5282 !important;
+        color: white !important;
         font-weight: 500;
         border-radius: 8px;
         border: none;
@@ -298,62 +203,33 @@ st.markdown("""
     }
     
     .stButton > button:hover {
-        background-color: #1a365d;
+        background-color: #1a365d !important;
         box-shadow: 0 4px 8px rgba(44, 82, 130, 0.3);
         transform: translateY(-1px);
     }
     
-    @media (prefers-color-scheme: dark) {
-        .stButton > button {
-            background-color: #4299e1;
-            color: #0e1117;
-        }
-        
-        .stButton > button:hover {
-            background-color: #63b3ed;
-        }
-    }
-    
     .stInfo {
-        background-color: #e6f3ff;
+        background-color: #e6f3ff !important;
         border-left: 5px solid #4299e1;
         border-radius: 6px;
         padding: 1rem;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stInfo {
-            background-color: #1a2942;
-            color: #90cdf4;
-        }
+        color: #2d3748 !important;
     }
     
     .stSuccess {
-        background-color: #d4edda;
+        background-color: #d4edda !important;
         border-left: 5px solid #28a745;
         border-radius: 6px;
         padding: 1rem;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stSuccess {
-            background-color: #1a4d2e;
-            color: #9ae6b4;
-        }
+        color: #2d3748 !important;
     }
     
     .stWarning {
-        background-color: #fff3cd;
+        background-color: #fff3cd !important;
         border-left: 5px solid #ffc107;
         border-radius: 6px;
         padding: 1rem;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stWarning {
-            background-color: #5c4a1f;
-            color: #fbd38d;
-        }
+        color: #2d3748 !important;
     }
     
     hr {
@@ -362,45 +238,31 @@ st.markdown("""
         margin: 3rem 0;
     }
     
-    @media (prefers-color-scheme: dark) {
-        hr {
-            border-top: 2px solid #2d3748;
-        }
-    }
-    
     .stCheckbox label {
         font-weight: 500;
-        color: #2d3748;
-    }
-    
-    @media (prefers-color-scheme: dark) {
-        .stCheckbox label {
-            color: #e2e8f0;
-        }
+        color: #2d3748 !important;
     }
     
     .stRadio > div {
         gap: 1rem;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .stRadio label {
-            color: #e2e8f0;
-        }
+    .stRadio label {
+        color: #2d3748 !important;
     }
     
     .stSelectbox > div > div {
-        background-color: white;
+        background-color: white !important;
         border: 2px solid #cbd5e0;
         border-radius: 6px;
     }
     
-    @media (prefers-color-scheme: dark) {
-        .stSelectbox > div > div {
-            background-color: #1a202c;
-            border: 2px solid #4a5568;
-            color: #e2e8f0;
-        }
+    .stSelectbox label {
+        color: #2d3748 !important;
+    }
+    
+    .stSelectbox [data-baseweb="select"] {
+        background-color: white !important;
     }
     
     .row-widget.stHorizontal {
@@ -412,8 +274,8 @@ st.markdown("""
     }
     
     .stLinkButton > a {
-        background-color: #2c5282;
-        color: white;
+        background-color: #2c5282 !important;
+        color: white !important;
         padding: 0.7rem 1.8rem;
         border-radius: 8px;
         text-decoration: none;
@@ -423,50 +285,43 @@ st.markdown("""
     }
     
     .stLinkButton > a:hover {
-        background-color: #1a365d;
+        background-color: #1a365d !important;
         box-shadow: 0 4px 8px rgba(44, 82, 130, 0.3);
         transform: translateY(-1px);
     }
     
-    @media (prefers-color-scheme: dark) {
-        .stLinkButton > a {
-            background-color: #4299e1;
-            color: #0e1117;
-        }
-        
-        .stLinkButton > a:hover {
-            background-color: #63b3ed;
-        }
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: white;
     }
     
-    /* Dark mode text color fixes */
-    @media (prefers-color-scheme: dark) {
-        p, span, div {
-            color: #e2e8f0;
-        }
-        
-        .stMarkdown {
-            color: #e2e8f0;
-        }
-        
-        .stCaption {
-            color: #a0aec0;
-        }
+    .stTabs [data-baseweb="tab"] {
+        color: #4a5568;
+        background-color: white;
     }
     
-    /* Tab styling for dark mode */
-    @media (prefers-color-scheme: dark) {
-        .stTabs [data-baseweb="tab-list"] {
-            background-color: #1a202c;
-        }
-        
-        .stTabs [data-baseweb="tab"] {
-            color: #a0aec0;
-        }
-        
-        .stTabs [aria-selected="true"] {
-            color: #4299e1;
-        }
+    .stTabs [aria-selected="true"] {
+        color: #2c5282 !important;
+        background-color: white;
+    }
+    
+    /* Markdown text */
+    .stMarkdown {
+        color: #2d3748 !important;
+    }
+    
+    p {
+        color: #2d3748 !important;
+    }
+    
+    .stCaption {
+        color: #4a5568 !important;
+    }
+    
+    /* Force inputs to be visible */
+    input, select, textarea {
+        background-color: white !important;
+        color: #2d3748 !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -1131,14 +986,16 @@ aha_cat = percent_category(aha)
 st.markdown("")
 st.markdown("---")
 
-st.subheader("🔗 Verify with Official Calculators")
+st.subheader("🔗 Verify with Official Guidelines & Calculators")
 st.markdown("")
 
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 with col1:
-    st.link_button("Open QRISK3 Calculator","https://qrisk.org/three/")
+    st.link_button("QRISK3 Calculator","https://qrisk.org/")
 with col2:
-    st.link_button("Open AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
+    st.link_button("AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
+with col3:
+    st.link_button("LAI 2023 Guidelines","https://www.lipidjournal.com/article/S1933-2874(24)00006-0/fulltext")
 
 # ========== LAI CALCULATION ==========
 risk_enhancers = (smoke=="Current") or mets or fh_fh or (lpa is not None and lpa>50) or (apob is not None and apob>130)
@@ -1260,7 +1117,7 @@ with tab3:
         st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
         st.markdown(f"**Monitoring:** {recs['monitoring']}")
 
-# ========== AI-POWERED UNIFIED RECOMMENDATION ==========
+# ========== UNIFIED RECOMMENDATION ==========
 st.markdown("---")
 st.header("🤖 Unified Clinical Recommendation")
 st.markdown("")
