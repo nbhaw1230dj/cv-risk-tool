@@ -2,24 +2,55 @@ import streamlit as st
 import math
 import json
 
-st.set_page_config(layout="wide", page_title="🫀 Cardiovascular Risk Assessment Tool")
+st.set_page_config(
+    layout="wide", 
+    page_title="🫀 Cardiovascular Risk Assessment Tool",
+    initial_sidebar_state="collapsed"
+)
 
-# Custom CSS for medical-grade UI - Light mode only
+# Force light theme and hide theme switcher
 st.markdown("""
 <style>
-    /* Force light mode */
+    /* Hide the theme settings button */
+    button[kind="header"] {
+        display: none !important;
+    }
+    
+    /* Hide settings menu */
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    
+    /* Hide the hamburger menu */
+    #MainMenu {
+        display: none !important;
+    }
+    
+    /* Hide "Deploy" button */
+    .stDeployButton {
+        display: none !important;
+    }
+    
+    /* Force light theme */
     .stApp {
-        background-color: #f5f7fa;
-        color: #2d3748;
+        background-color: #f5f7fa !important;
+        color: #2d3748 !important;
     }
     
     .main {
-        background-color: #f5f7fa;
+        background-color: #f5f7fa !important;
+    }
+    
+    /* Override Streamlit's theme variables */
+    :root {
+        --background-color: #f5f7fa;
+        --secondary-background-color: #ffffff;
+        --text-color: #2d3748;
     }
     
     /* Ensure all text is dark on light background */
-    .stApp * {
-        color: #2d3748;
+    .stApp *, .stApp p, .stApp span, .stApp div, .stApp label {
+        color: #2d3748 !important;
     }
     
     h1 {
@@ -37,9 +68,9 @@ st.markdown("""
         margin-top: 2.5rem;
         margin-bottom: 1.5rem;
         border-left: 5px solid #4299e1;
-        padding-left: 1.5rem;
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
+        padding-left: 1.8rem !important;
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
         background: linear-gradient(90deg, rgba(66, 153, 225, 0.1) 0%, transparent 100%);
     }
     
@@ -66,17 +97,25 @@ st.markdown("""
     .stCheckbox {
         display: flex;
         align-items: center;
-        justify-content: center;
+        justify-content: flex-start;
         margin-top: 0;
         padding-top: 0;
+        margin-bottom: 0.4rem !important;
     }
     
     .stCheckbox > label {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin-top: 1.8rem;
+        justify-content: flex-start;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
         color: #2d3748 !important;
+    }
+    
+    /* Compact checkbox spacing for medical/family history */
+    .compact-checkbox .stCheckbox {
+        margin-bottom: 0.3rem !important;
+        padding: 0.2rem 0 !important;
     }
     
     .risk-card {
@@ -273,36 +312,88 @@ st.markdown("""
         margin-bottom: 0.5rem;
     }
     
-    .stLinkButton > a {
-        background-color: #2c5282 !important;
-        color: white !important;
-        padding: 0.7rem 1.8rem;
-        border-radius: 8px;
-        text-decoration: none;
-        display: inline-block;
-        transition: all 0.3s;
-        box-shadow: 0 2px 4px rgba(44, 82, 130, 0.2);
+    /* Premium styled link buttons */
+    .premium-link-container {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        flex-wrap: wrap;
     }
     
-    .stLinkButton > a:hover {
-        background-color: #1a365d !important;
-        box-shadow: 0 4px 8px rgba(44, 82, 130, 0.3);
-        transform: translateY(-1px);
+    .premium-link {
+        flex: 1;
+        min-width: 250px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.2rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        border: 2px solid transparent;
+        text-align: center;
+    }
+    
+    .premium-link:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .premium-link-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        color: white !important;
+    }
+    
+    .premium-link-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        color: white !important;
+    }
+    
+    /* Alternative gradient colors for variety */
+    .premium-link.qrisk {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    }
+    
+    .premium-link.qrisk:hover {
+        box-shadow: 0 8px 25px rgba(240, 147, 251, 0.6);
+    }
+    
+    .premium-link.lai {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    }
+    
+    .premium-link.lai:hover {
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
     }
     
     /* Tab styling */
     .stTabs [data-baseweb="tab-list"] {
         background-color: white;
+        gap: 0.5rem;
     }
     
     .stTabs [data-baseweb="tab"] {
-        color: #4a5568;
-        background-color: white;
+        color: #4a5568 !important;
+        background-color: #f7fafc;
+        border-radius: 8px 8px 0 0;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
     }
     
     .stTabs [aria-selected="true"] {
         color: #2c5282 !important;
-        background-color: white;
+        background-color: white !important;
+        border-bottom: 3px solid #4299e1;
     }
     
     /* Markdown text */
@@ -322,6 +413,15 @@ st.markdown("""
     input, select, textarea {
         background-color: white !important;
         color: #2d3748 !important;
+    }
+    
+    /* Section divider styling */
+    .section-divider {
+        border: none;
+        border-top: 3px solid #e2e8f0;
+        margin: 3rem 0;
+        background: linear-gradient(90deg, #4299e1 0%, transparent 100%);
+        height: 3px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -902,26 +1002,47 @@ smoke=st.selectbox("Smoking Status",["Never","Former","Current"])
 st.header("Medical History")
 st.markdown("")
 
-none_hist=st.checkbox("None of the following",key="hist_none")
-st.markdown("")
+# Initialize session state for medical history
+if 'none_hist' not in st.session_state:
+    st.session_state.none_hist = False
 
 col1, col2, col3 = st.columns(3)
+
 with col1:
-    mi=st.checkbox("Myocardial Infarction",disabled=none_hist)
-    stroke=st.checkbox("Stroke/TIA",disabled=none_hist)
-    pad=st.checkbox("Peripheral Artery Disease",disabled=none_hist)
-    revasc=st.checkbox("Revascularization",disabled=none_hist)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    mi=st.checkbox("Myocardial Infarction", disabled=st.session_state.none_hist, key="mi")
+    stroke=st.checkbox("Stroke/TIA", disabled=st.session_state.none_hist, key="stroke")
+    pad=st.checkbox("Peripheral Artery Disease", disabled=st.session_state.none_hist, key="pad")
+    revasc=st.checkbox("Revascularization", disabled=st.session_state.none_hist, key="revasc")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    ckd=st.checkbox("Chronic Kidney Disease",disabled=none_hist)
-    hf=st.checkbox("Heart Failure",disabled=none_hist)
-    nafld=st.checkbox("NAFLD",disabled=none_hist)
-    mets=st.checkbox("Metabolic Syndrome",disabled=none_hist)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    ckd=st.checkbox("Chronic Kidney Disease", disabled=st.session_state.none_hist, key="ckd")
+    hf=st.checkbox("Heart Failure", disabled=st.session_state.none_hist, key="hf")
+    nafld=st.checkbox("NAFLD", disabled=st.session_state.none_hist, key="nafld")
+    mets=st.checkbox("Metabolic Syndrome", disabled=st.session_state.none_hist, key="mets")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col3:
-    atrial_fib=st.checkbox("Atrial Fibrillation",disabled=none_hist)
-    rheumatoid_arthritis=st.checkbox("Rheumatoid Arthritis",disabled=none_hist)
-    migraine=st.checkbox("Migraine",disabled=none_hist)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    atrial_fib=st.checkbox("Atrial Fibrillation", disabled=st.session_state.none_hist, key="afib")
+    rheumatoid_arthritis=st.checkbox("Rheumatoid Arthritis", disabled=st.session_state.none_hist, key="ra")
+    migraine=st.checkbox("Migraine", disabled=st.session_state.none_hist, key="migraine")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("")
+none_hist_check = st.checkbox("None of the above", key="none_hist_check")
+
+# Handle none_hist logic
+if none_hist_check != st.session_state.none_hist:
+    st.session_state.none_hist = none_hist_check
+    if none_hist_check:
+        # Clear all medical history checkboxes
+        for key in ['mi', 'stroke', 'pad', 'revasc', 'ckd', 'hf', 'nafld', 'mets', 'afib', 'ra', 'migraine']:
+            if key in st.session_state:
+                st.session_state[key] = False
+    st.rerun()
 
 ascvd = mi or stroke or pad or revasc
 
@@ -930,36 +1051,74 @@ st.header("Family History")
 st.caption("Premature ASCVD = Male <55, Female <65 in first-degree relatives")
 st.markdown("")
 
-none_fh=st.checkbox("None of the following",key="fh_none")
-st.markdown("")
+# Initialize session state for family history
+if 'none_fh' not in st.session_state:
+    st.session_state.none_fh = False
 
 col1, col2 = st.columns(2)
+
 with col1:
-    prem_ascvd=st.checkbox("Premature ASCVD in first-degree relatives",disabled=none_fh)
-    fh_dm=st.checkbox("Family History of Diabetes",disabled=none_fh)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    prem_ascvd=st.checkbox("Premature ASCVD in first-degree relatives", disabled=st.session_state.none_fh, key="prem_ascvd")
+    fh_dm=st.checkbox("Family History of Diabetes", disabled=st.session_state.none_fh, key="fh_dm")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    fh_htn=st.checkbox("Family History of Hypertension",disabled=none_fh)
-    fh_fh=st.checkbox("Familial Hypercholesterolemia",disabled=none_fh)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    fh_htn=st.checkbox("Family History of Hypertension", disabled=st.session_state.none_fh, key="fh_htn")
+    fh_fh=st.checkbox("Familial Hypercholesterolemia", disabled=st.session_state.none_fh, key="fh_fh")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("")
+none_fh_check = st.checkbox("None of the above", key="none_fh_check")
+
+# Handle none_fh logic
+if none_fh_check != st.session_state.none_fh:
+    st.session_state.none_fh = none_fh_check
+    if none_fh_check:
+        # Clear all family history checkboxes
+        for key in ['prem_ascvd', 'fh_dm', 'fh_htn', 'fh_fh']:
+            if key in st.session_state:
+                st.session_state[key] = False
+    st.rerun()
 
 # ========== MEDICATIONS ==========
 st.header("Current Medications")
 st.markdown("")
 
-none_med=st.checkbox("None of the following",key="med_none")
-st.markdown("")
+# Initialize session state for medications
+if 'none_med' not in st.session_state:
+    st.session_state.none_med = False
 
 col1, col2 = st.columns(2)
+
 with col1:
-    on_statin=st.checkbox("Statin",disabled=none_med)
-    antihtn=st.checkbox("Antihypertensive",disabled=none_med)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    on_statin=st.checkbox("Statin", disabled=st.session_state.none_med, key="on_statin")
+    antihtn=st.checkbox("Antihypertensive", disabled=st.session_state.none_med, key="antihtn")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    antidm=st.checkbox("Antidiabetic",disabled=none_med)
-    antiplate=st.checkbox("Antiplatelet",disabled=none_med)
+    st.markdown('<div class="compact-checkbox">', unsafe_allow_html=True)
+    antidm=st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
+    antiplate=st.checkbox("Antiplatelet", disabled=st.session_state.none_med, key="antiplate")
+    st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("")
+none_med_check = st.checkbox("None of the above", key="none_med_check")
+
+# Handle none_med logic
+if none_med_check != st.session_state.none_med:
+    st.session_state.none_med = none_med_check
+    if none_med_check:
+        # Clear all medication checkboxes
+        for key in ['on_statin', 'antihtn', 'antidm', 'antiplate']:
+            if key in st.session_state:
+                st.session_state[key] = False
+    st.rerun()
 
 # ========== CALCULATIONS ==========
-st.markdown("---")
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.header("📊 Calculated Risk Scores")
 st.markdown("")
 
@@ -984,18 +1143,28 @@ qrisk_cat = percent_category(qrisk)
 aha_cat = percent_category(aha)
 
 st.markdown("")
-st.markdown("---")
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 
-st.subheader("🔗 Verify with Official Guidelines & Calculators")
+st.subheader("🔗 Official Guidelines & Calculators")
 st.markdown("")
 
-col1, col2, col3 = st.columns(3)
-with col1:
-    st.link_button("QRISK3 Calculator","https://qrisk.org/")
-with col2:
-    st.link_button("AHA PREVENT Calculator","https://professional.heart.org/en/guidelines-and-statements/prevent-calculator")
-with col3:
-    st.link_button("LAI 2023 Guidelines","https://www.lipidjournal.com/article/S1933-2874(24)00006-0/fulltext")
+# Premium styled links
+st.markdown("""
+<div class="premium-link-container">
+    <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator" target="_blank" class="premium-link">
+        <div class="premium-link-title">AHA PREVENT</div>
+        <div class="premium-link-subtitle">American Heart Association Calculator</div>
+    </a>
+    <a href="https://qrisk.org/" target="_blank" class="premium-link qrisk">
+        <div class="premium-link-title">QRISK3</div>
+        <div class="premium-link-subtitle">UK Cardiovascular Risk Calculator</div>
+    </a>
+    <a href="https://www.lipidjournal.com/article/S1933-2874(24)00006-0/fulltext" target="_blank" class="premium-link lai">
+        <div class="premium-link-title">LAI 2023</div>
+        <div class="premium-link-subtitle">Lipid Association of India Guidelines</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
 
 # ========== LAI CALCULATION ==========
 risk_enhancers = (smoke=="Current") or mets or fh_fh or (lpa is not None and lpa>50) or (apob is not None and apob>130)
@@ -1009,7 +1178,7 @@ else:
     lai="Low"
 
 # ========== RISK PANEL ==========
-st.markdown("---")
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.header("🎯 Risk Stratification Panel")
 st.markdown("")
 
@@ -1064,7 +1233,7 @@ with cols[2]:
         st.markdown('<div class="risk-card risk-unavailable"><h3 style="margin:0;">LAI Risk</h3><p style="margin:0.5rem 0;">Unavailable</p></div>', unsafe_allow_html=True)
 
 # ========== INDIVIDUAL TREATMENT RECOMMENDATIONS ==========
-st.markdown("---")
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.header("📋 Treatment Recommendations by Guidelines")
 st.markdown("")
 
@@ -1118,7 +1287,7 @@ with tab3:
         st.markdown(f"**Monitoring:** {recs['monitoring']}")
 
 # ========== UNIFIED RECOMMENDATION ==========
-st.markdown("---")
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.header("🤖 Unified Clinical Recommendation")
 st.markdown("")
 
@@ -1130,5 +1299,5 @@ st.markdown("")
 st.info("💡 **Note:** This unified recommendation synthesizes all three risk assessment tools and provides evidence-based guidance. Please use clinical judgment and consider individual patient factors.")
 
 st.markdown("")
-st.markdown("---")
+st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
 st.caption("*This tool is intended for clinical decision support based on AHA, QRISK3, and LAI 2023 Guidelines. All treatment decisions should be made through shared decision-making with the patient.*")
