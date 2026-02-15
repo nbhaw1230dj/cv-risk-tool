@@ -2,61 +2,427 @@ import streamlit as st
 import math
 import json
 
-# MUST be first Streamlit command
 st.set_page_config(
-    layout="wide",
+    layout="wide", 
     page_title="🫀 Cardiovascular Risk Assessment Tool",
     initial_sidebar_state="collapsed"
 )
 
-# Strong Safari / iOS light-mode enforcement
-st.markdown(
-    """
-    <meta name="color-scheme" content="light only">
-    <style>
-        :root { color-scheme: light !important; }
-
-        html, body {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }
-
-        .stApp, .main, .block-container {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-        }
-
-        section[data-testid="stSidebar"] {
-            background-color: #f8f9fa !important;
-            color: #000000 !important;
-        }
-
-        input, textarea, select {
-            background-color: #ffffff !important;
-            color: #000000 !important;
-            border: 1px solid #cccccc !important;
-        }
-
-        button {
-            background-color: #f0f2f6 !important;
-            color: #000000 !important;
-        }
-
-        * {
-            -webkit-text-fill-color: initial !important;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# Hide Streamlit UI controls
+# Force light theme and hide theme switcher
 st.markdown("""
 <style>
-    button[kind="header"] { display: none !important; }
-    [data-testid="stToolbar"] { display: none !important; }
-    #MainMenu { display: none !important; }
-    .stDeployButton { display: none !important; }
+    /* Hide the theme settings button */
+    button[kind="header"] {
+        display: none !important;
+    }
+    
+    /* Hide settings menu */
+    [data-testid="stToolbar"] {
+        display: none !important;
+    }
+    
+    /* Hide the hamburger menu */
+    #MainMenu {
+        display: none !important;
+    }
+    
+    /* Hide "Deploy" button */
+    .stDeployButton {
+        display: none !important;
+    }
+    
+    /* Force light theme */
+    .stApp {
+        background-color: #f5f7fa !important;
+        color: #2d3748 !important;
+    }
+    
+    .main {
+        background-color: #f5f7fa !important;
+    }
+    
+    /* Override Streamlit's theme variables */
+    :root {
+        --background-color: #f5f7fa;
+        --secondary-background-color: #ffffff;
+        --text-color: #2d3748;
+    }
+    
+    /* Ensure all text is dark on light background */
+    .stApp *, .stApp p, .stApp span, .stApp div, .stApp label {
+        color: #2d3748 !important;
+    }
+    
+    h1 {
+        color: #1a365d !important;
+        font-weight: 600;
+        border-bottom: 3px solid #2c5282;
+        padding-bottom: 0.8rem;
+        margin-bottom: 2rem;
+        margin-top: 0;
+    }
+    
+    h2 {
+        color: #2d3748 !important;
+        font-weight: 600;
+        margin-top: 2.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 5px solid #4299e1;
+        padding-left: 1.8rem !important;
+        padding-top: 0.6rem;
+        padding-bottom: 0.6rem;
+        background: linear-gradient(90deg, rgba(66, 153, 225, 0.1) 0%, transparent 100%);
+    }
+    
+    h3 {
+        color: #2d3748 !important;
+        font-weight: 600;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .stNumberInput {
+        margin-bottom: 0.5rem;
+    }
+    
+    .stNumberInput > div {
+        display: flex;
+        align-items: center;
+    }
+    
+    .stNumberInput > div > div {
+        flex: 1;
+    }
+    
+    .stCheckbox {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-top: 0;
+        padding-top: 0;
+        margin-bottom: 0.4rem !important;
+    }
+    
+    .stCheckbox > label {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        margin-top: 0 !important;
+        padding-top: 0 !important;
+        color: #2d3748 !important;
+    }
+    
+    /* Compact checkbox spacing for medical/family history */
+    .compact-checkbox .stCheckbox {
+        margin-bottom: 0.3rem !important;
+        padding: 0.2rem 0 !important;
+    }
+    
+    .risk-card {
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 0.5rem 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+        border: 1px solid #e2e8f0;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .risk-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+    
+    .risk-low {
+        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+        border-left: 5px solid #28a745;
+    }
+    
+    .risk-moderate {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%);
+        border-left: 5px solid #ffc107;
+    }
+    
+    .risk-high {
+        background: linear-gradient(135deg, #ffd6a5 0%, #ffcc80 100%);
+        border-left: 5px solid #ff9800;
+    }
+    
+    .risk-veryhigh {
+        background: linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%);
+        border-left: 5px solid #dc3545;
+    }
+    
+    .risk-unavailable {
+        background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+        border-left: 5px solid #6c757d;
+    }
+    
+    .contributing-factors {
+        background-color: rgba(255,255,255,0.8);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1.2rem;
+        font-size: 0.9rem;
+        border: 1px solid rgba(0,0,0,0.08);
+    }
+    
+    .factor-title {
+        font-weight: 600;
+        color: #2d3748 !important;
+        margin-bottom: 0.6rem;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .factor-item {
+        color: #4a5568 !important;
+        padding: 0.3rem 0;
+        padding-left: 1.2rem;
+        position: relative;
+        line-height: 1.5;
+    }
+    
+    .factor-item:before {
+        content: "▪";
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+        color: #4299e1;
+    }
+    
+    .recommendation-box {
+        background-color: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin: 1rem 0;
+        border-left: 4px solid #4299e1;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .stMetric {
+        background-color: white !important;
+        padding: 1.2rem;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .stMetric label {
+        color: #2d3748 !important;
+    }
+    
+    .stMetric [data-testid="stMetricValue"] {
+        color: #1a365d !important;
+    }
+    
+    .stNumberInput > div > div > input {
+        background-color: white !important;
+        border: 2px solid #cbd5e0;
+        border-radius: 6px;
+        padding: 0.6rem;
+        transition: border-color 0.2s;
+        color: #2d3748 !important;
+    }
+    
+    .stNumberInput > div > div > input:focus {
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    
+    .stButton > button {
+        background-color: #2c5282 !important;
+        color: white !important;
+        font-weight: 500;
+        border-radius: 8px;
+        border: none;
+        padding: 0.7rem 1.8rem;
+        transition: all 0.3s;
+        box-shadow: 0 2px 4px rgba(44, 82, 130, 0.2);
+    }
+    
+    .stButton > button:hover {
+        background-color: #1a365d !important;
+        box-shadow: 0 4px 8px rgba(44, 82, 130, 0.3);
+        transform: translateY(-1px);
+    }
+    
+    .stInfo {
+        background-color: #e6f3ff !important;
+        border-left: 5px solid #4299e1;
+        border-radius: 6px;
+        padding: 1rem;
+        color: #2d3748 !important;
+    }
+    
+    .stSuccess {
+        background-color: #d4edda !important;
+        border-left: 5px solid #28a745;
+        border-radius: 6px;
+        padding: 1rem;
+        color: #2d3748 !important;
+    }
+    
+    .stWarning {
+        background-color: #fff3cd !important;
+        border-left: 5px solid #ffc107;
+        border-radius: 6px;
+        padding: 1rem;
+        color: #2d3748 !important;
+    }
+    
+    hr {
+        border: none;
+        border-top: 2px solid #e2e8f0;
+        margin: 3rem 0;
+    }
+    
+    .stCheckbox label {
+        font-weight: 500;
+        color: #2d3748 !important;
+    }
+    
+    .stRadio > div {
+        gap: 1rem;
+    }
+    
+    .stRadio label {
+        color: #2d3748 !important;
+    }
+    
+    .stSelectbox > div > div {
+        background-color: white !important;
+        border: 2px solid #cbd5e0;
+        border-radius: 6px;
+    }
+    
+    .stSelectbox label {
+        color: #2d3748 !important;
+    }
+    
+    .stSelectbox [data-baseweb="select"] {
+        background-color: white !important;
+    }
+    
+    .row-widget.stHorizontal {
+        gap: 1.5rem;
+    }
+    
+    .element-container {
+        margin-bottom: 0.5rem;
+    }
+    
+    /* Premium styled link buttons */
+    .premium-link-container {
+        display: flex;
+        gap: 1rem;
+        margin: 1.5rem 0;
+        flex-wrap: wrap;
+    }
+    
+    .premium-link {
+        flex: 1;
+        min-width: 250px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1.2rem 1.5rem;
+        border-radius: 12px;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        border: 2px solid transparent;
+        text-align: center;
+    }
+    
+    .premium-link:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .premium-link-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 0.3rem;
+        color: white !important;
+    }
+    
+    .premium-link-subtitle {
+        font-size: 0.85rem;
+        opacity: 0.9;
+        color: white !important;
+    }
+    
+    /* Alternative gradient colors for variety */
+    .premium-link.qrisk {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    }
+    
+    .premium-link.qrisk:hover {
+        box-shadow: 0 8px 25px rgba(240, 147, 251, 0.6);
+    }
+    
+    .premium-link.lai {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+    }
+    
+    .premium-link.lai:hover {
+        box-shadow: 0 8px 25px rgba(79, 172, 254, 0.6);
+    }
+    
+    /* Tab styling */
+    .stTabs [data-baseweb="tab-list"] {
+        background-color: white;
+        gap: 0.5rem;
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        color: #4a5568 !important;
+        background-color: #f7fafc;
+        border-radius: 8px 8px 0 0;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        color: #2c5282 !important;
+        background-color: white !important;
+        border-bottom: 3px solid #4299e1;
+    }
+    
+    /* Markdown text */
+    .stMarkdown {
+        color: #2d3748 !important;
+    }
+    
+    p {
+        color: #2d3748 !important;
+    }
+    
+    .stCaption {
+        color: #4a5568 !important;
+    }
+    
+    /* Force inputs to be visible */
+    input, select, textarea {
+        background-color: white !important;
+        color: #2d3748 !important;
+    }
+    
+    /* Section divider styling */
+    .section-divider {
+        border: none;
+        border-top: 3px solid #e2e8f0;
+        margin: 3rem 0;
+        background: linear-gradient(90deg, #4299e1 0%, transparent 100%);
+        height: 3px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
