@@ -901,12 +901,10 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
 
 
 # ==================== HEADER ====================
-# Pure HTML header — fully responsive, no st.columns (which stack on mobile)
 THEME_LABEL = "Light Mode" if is_dark else "Dark Mode"
 
 st.markdown(f"""
 <style>
-  /* ---- App header wrapper ---- */
   .cv-header {{
     display: flex;
     align-items: flex-start;
@@ -915,8 +913,6 @@ st.markdown(f"""
     margin-bottom: 0.5rem;
     flex-wrap: wrap;
   }}
-
-  /* ---- Title block ---- */
   .cv-header-title {{
     flex: 1 1 280px;
   }}
@@ -933,35 +929,14 @@ st.markdown(f"""
     background: none !important;
     letter-spacing: -0.01em;
   }}
-
-  /* ---- Right-side action group ---- */
-  .cv-header-actions {{
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.45rem;
-    flex-shrink: 0;
-    padding-top: 0.15rem;
-  }}
-
-  /* ---- Reference link row ---- */
   .cv-ref-row {{
     display: flex;
     gap: 0.4rem;
     flex-wrap: wrap;
     justify-content: flex-end;
+    padding-top: 0.15rem;
   }}
-
-  /* ---- Button row ---- */
-  .cv-btn-row {{
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: nowrap;
-    justify-content: flex-end;
-  }}
-
-  /* ---- Shared pill button style ---- */
-  .cv-pill {{
+  .cv-pill-ref {{
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
@@ -969,161 +944,67 @@ st.markdown(f"""
     font-size: 0.8rem;
     font-weight: 600;
     padding: 0.38rem 0.9rem;
-    cursor: pointer;
     white-space: nowrap;
-    line-height: 1.4;
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
     text-decoration: none !important;
-  }}
-
-  /* ---- Reference links — subtle outlined ---- */
-  .cv-pill-ref {{
     background: {TOOLBAR_BTN_BG};
     color: {TOOLBAR_BTN_COLOR} !important;
     border: 1.5px solid {TOOLBAR_BTN_BORDER};
+    transition: border-color 0.15s, color 0.15s;
   }}
   .cv-pill-ref:hover {{
     border-color: {ACCENT};
     color: {ACCENT} !important;
-    background: {TOOLBAR_BTN_BG};
   }}
-
-  /* ---- Reset button — outlined, clearly visible both themes ---- */
-  .cv-pill-reset {{
-    background: transparent;
-    color: {TEXT_PRIMARY} !important;
-    border: 1.5px solid {BORDER_COLOR};
-  }}
-  .cv-pill-reset:hover {{
-    border-color: {ACCENT};
-    color: {ACCENT} !important;
-  }}
-
-  /* ---- Theme toggle — solid accent fill, always visible ---- */
-  .cv-pill-theme {{
-    background: {ACCENT};
-    color: #ffffff !important;
-    border: 1.5px solid {ACCENT};
-  }}
-  .cv-pill-theme:hover {{
-    background: {ACCENT_DARK};
-    border-color: {ACCENT_DARK};
-  }}
-
-  /* ---- Mobile: stack title full-width, actions full-width ---- */
   @media (max-width: 520px) {{
-    .cv-header {{
-      flex-direction: column;
-      gap: 0.7rem;
-    }}
-    .cv-header-actions {{
-      width: 100%;
-      align-items: flex-start;
-    }}
-    .cv-ref-row, .cv-btn-row {{
-      justify-content: flex-start;
-    }}
-    .cv-header-title h1 {{
-      font-size: 1.45rem !important;
-    }}
+    .cv-header {{ flex-direction: column; gap: 0.7rem; }}
+    .cv-ref-row {{ justify-content: flex-start; }}
+    .cv-header-title h1 {{ font-size: 1.45rem !important; }}
   }}
 </style>
 
 <div class="cv-header">
-
   <div class="cv-header-title">
     <h1>🫀 Cardiovascular Risk Assessment Tool</h1>
   </div>
-
-  <div class="cv-header-actions">
-
-    <div class="cv-ref-row">
-      <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
-         target="_blank" class="cv-pill cv-pill-ref">↗ AHA PREVENT</a>
-      <a href="https://qrisk.org/" target="_blank"
-         class="cv-pill cv-pill-ref">↗ QRISK3</a>
-    </div>
-
-    <div class="cv-btn-row">
-      <form method="get" action="" style="margin:0;padding:0;">
-        <button type="submit" class="cv-pill cv-pill-reset"
-                onclick="window.__cvReset=true; return false;"
-                id="cv-reset-btn">↺ Reset</button>
-      </form>
-      <button class="cv-pill cv-pill-theme" id="cv-theme-btn"
-              onclick="document.getElementById('theme-trigger').click(); return false;">
-        {TOGGLE_ICON} {THEME_LABEL}
-      </button>
-    </div>
-
+  <div class="cv-ref-row">
+    <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
+       target="_blank" class="cv-pill-ref">↗ AHA PREVENT</a>
+    <a href="https://qrisk.org/" target="_blank" class="cv-pill-ref">↗ QRISK3</a>
   </div>
 </div>
 """, unsafe_allow_html=True)
 
-# Hidden Streamlit buttons — triggered by the HTML buttons above via JS click
-# These are the actual functional buttons; styled to be invisible
-st.markdown("""
-<style>
-  /* Make the hidden trigger buttons truly invisible but still clickable via JS */
-  #hidden-btn-row { position: absolute; left: -9999px; top: -9999px; opacity: 0; pointer-events: none; height: 0; overflow: hidden; }
-</style>
-<div id="hidden-btn-row">
-""", unsafe_allow_html=True)
-
-# The functional reset button — placed, then hidden; we use a visible HTML button above
-# For reliable Streamlit state handling, keep real st.buttons but hide them visually
-# and use a separate visible approach: show real buttons in a styled column overlay
-
-# Because Streamlit's JS sandbox blocks arbitrary JS from clicking hidden buttons,
-# we use real styled st.buttons via a zero-height invisible row + the visible HTML header above.
-# The HTML buttons above are pure cosmetic; these real buttons handle state:
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Real functional buttons — hidden visually, shown in their own compact row just under the header
-# Use CSS to make them look styled and part of the header visually
+# ---- Real functional buttons ----
 st.markdown(f"""
 <style>
-  /* Target the specific button container to hide it from layout flow */
-  div[data-testid="stHorizontalBlock"]:has(button[data-testid="baseButton-secondary"]) {{
-    display: none !important;
-  }}
-</style>
-""", unsafe_allow_html=True)
-
-# Visible action row using REAL Streamlit buttons styled to match the header design
-_sp1, _rc, _tc, _sp2 = st.columns([6, 1.1, 1.2, 0.1])
-
-st.markdown(f"""
-<style>
-  /* Style only the reset/theme columns — use data-testid targeting is unreliable;
-     instead style all buttons in the header region with a wrapper class approach */
-  .header-btn-area .stButton > button {{
+  .header-btn-reset .stButton > button {{
     border-radius: 7px !important;
     font-size: 0.8rem !important;
     font-weight: 600 !important;
     padding: 0.38rem 0.6rem !important;
     width: 100% !important;
     box-shadow: none !important;
-    transition: background 0.15s !important;
-    margin-top: -0.5rem !important;
-  }}
-  /* Reset — outlined */
-  .header-btn-reset .stButton > button {{
     background: transparent !important;
     color: {TEXT_PRIMARY} !important;
     border: 1.5px solid {BORDER_COLOR} !important;
+    margin-top: 0 !important;
   }}
   .header-btn-reset .stButton > button:hover {{
     border-color: {ACCENT} !important;
     color: {ACCENT} !important;
     background: transparent !important;
   }}
-  /* Theme — solid accent */
   .header-btn-theme .stButton > button {{
+    border-radius: 7px !important;
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    padding: 0.38rem 0.6rem !important;
+    width: 100% !important;
+    box-shadow: none !important;
     background: {ACCENT} !important;
     color: #ffffff !important;
     border: 1.5px solid {ACCENT} !important;
+    margin-top: 0 !important;
   }}
   .header-btn-theme .stButton > button:hover {{
     background: {ACCENT_DARK} !important;
@@ -1131,6 +1012,8 @@ st.markdown(f"""
   }}
 </style>
 """, unsafe_allow_html=True)
+
+_sp1, _rc, _tc, _sp2 = st.columns([6, 1.1, 1.2, 0.1])
 
 with _rc:
     st.markdown('<div class="header-btn-reset">', unsafe_allow_html=True)
