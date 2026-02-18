@@ -72,9 +72,9 @@ if is_dark:
     TAB_ACTIVE_COLOR  = "#4c9ef8"
     TAB_ACTIVE_BORDER = "#4c9ef8"
     UNIT_COLOR        = "#6b7280"
-    TOOLBAR_BTN_BG    = "#1e2130"
-    TOOLBAR_BTN_BORDER= "#2e3347"
-    TOOLBAR_BTN_COLOR = "#9aa0b8"
+    TOOLBAR_BTN_BG    = "#2a2f45"
+    TOOLBAR_BTN_BORDER= "#4c9ef8"
+    TOOLBAR_BTN_COLOR = "#e8eaf0"
     SECTION_LABEL_COLOR = "#4c9ef8"
 else:
     BG_PAGE        = "#f0f2f6"
@@ -900,61 +900,94 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
     return round(min(risk_10yr, 100), 1)
 
 
-# ==================== TOOLBAR ====================
-st.markdown(f"""
-<div class="cv-toolbar">
-  <div class="cv-toolbar-title">
-    <span class="cv-dot"></span>
-    Cardiovascular Risk Assessment
-  </div>
-  <div class="cv-toolbar-actions" id="toolbar-actions">
-  </div>
-</div>
-""", unsafe_allow_html=True)
+# ==================== HEADER ====================
+# Left: large title | Right: action buttons
+hdr_left, hdr_right = st.columns([3, 2])
 
-# Render toolbar buttons via Streamlit columns (positioned absolutely via CSS trick)
-tb1, tb2, tb3, tb_space = st.columns([1, 1, 1, 6])
-with tb1:
-    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
-        reset_all()
-        st.rerun()
-with tb2:
-    st.button(f"{TOGGLE_ICON} Theme", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
-with tb3:
-    st.markdown("""
-    <div style="padding-top:0.3rem;">
-        <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator" target="_blank"
-           style="font-size:0.75rem;color:#64748b;text-decoration:none;">↗ AHA</a>
-        &nbsp;
+with hdr_left:
+    st.markdown(
+        f'<h1 style="margin:0 0 0.2rem 0; padding:0; font-size:2rem; font-weight:800; '
+        f'color:{HEADING_COLOR}; border-bottom: 3px solid {ACCENT}; padding-bottom:0.6rem;">'
+        f'🫀 Cardiovascular Risk Assessment Tool</h1>',
+        unsafe_allow_html=True
+    )
+
+with hdr_right:
+    # Action row: Reset | Theme toggle | Reference links — all right-aligned
+    st.markdown(f"""
+    <div style="display:flex; align-items:flex-end; justify-content:flex-end;
+                gap:0.5rem; height:100%; padding-bottom:0.5rem; flex-wrap:wrap;">
+        <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
+           target="_blank"
+           style="display:inline-flex;align-items:center;gap:0.25rem;
+                  background:{TOOLBAR_BTN_BG};color:{TOOLBAR_BTN_COLOR};
+                  border:1px solid {TOOLBAR_BTN_BORDER};border-radius:6px;
+                  padding:0.32rem 0.75rem;font-size:0.76rem;font-weight:500;
+                  text-decoration:none;white-space:nowrap;line-height:1.5;">
+            ↗ AHA PREVENT
+        </a>
         <a href="https://qrisk.org/" target="_blank"
-           style="font-size:0.75rem;color:#64748b;text-decoration:none;">↗ QRISK</a>
+           style="display:inline-flex;align-items:center;gap:0.25rem;
+                  background:{TOOLBAR_BTN_BG};color:{TOOLBAR_BTN_COLOR};
+                  border:1px solid {TOOLBAR_BTN_BORDER};border-radius:6px;
+                  padding:0.32rem 0.75rem;font-size:0.76rem;font-weight:500;
+                  text-decoration:none;white-space:nowrap;line-height:1.5;">
+            ↗ QRISK3
+        </a>
     </div>
     """, unsafe_allow_html=True)
 
-# Override toolbar button styling to look like toolbar actions
-st.markdown(f"""
-<style>
-div[data-testid="column"]:nth-child(1) .stButton > button,
-div[data-testid="column"]:nth-child(2) .stButton > button {{
-    background-color: {TOOLBAR_BTN_BG} !important;
-    color: {TOOLBAR_BTN_COLOR} !important;
-    border: 1px solid {TOOLBAR_BTN_BORDER} !important;
-    font-size: 0.78rem !important;
-    padding: 0.28rem 0.7rem !important;
-    border-radius: 5px !important;
-    font-weight: 500 !important;
-    width: 100% !important;
-    margin-top: 0 !important;
-}}
-div[data-testid="column"]:nth-child(1) .stButton > button:hover,
-div[data-testid="column"]:nth-child(2) .stButton > button:hover {{
-    border-color: {ACCENT} !important;
-    background: {BG_PAGE} !important;
-}}
-</style>
-""", unsafe_allow_html=True)
+# Reset + Theme toggle row — underneath reference links, right-aligned
+btn_space, btn_reset_col, btn_theme_col = st.columns([5, 1, 1])
 
-st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+with btn_reset_col:
+    st.markdown(f"""
+    <style>
+    div[data-testid="column"]:nth-child(2) .stButton > button {{
+        background-color: {TOOLBAR_BTN_BG} !important;
+        color: {TOOLBAR_BTN_COLOR} !important;
+        border: 1.5px solid {TOOLBAR_BTN_BORDER} !important;
+        font-size: 0.8rem !important;
+        padding: 0.32rem 0.85rem !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }}
+    div[data-testid="column"]:nth-child(2) .stButton > button:hover {{
+        background-color: {ACCENT} !important;
+        color: #ffffff !important;
+        border-color: {ACCENT} !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    if st.button("↺  Reset", key="btn_reset", help="Clear all inputs"):
+        reset_all()
+        st.rerun()
+
+with btn_theme_col:
+    st.markdown(f"""
+    <style>
+    div[data-testid="column"]:nth-child(3) .stButton > button {{
+        background-color: {ACCENT} !important;
+        color: #ffffff !important;
+        border: 1.5px solid {ACCENT} !important;
+        font-size: 0.8rem !important;
+        padding: 0.32rem 0.85rem !important;
+        border-radius: 6px !important;
+        font-weight: 600 !important;
+        width: 100% !important;
+        box-shadow: none !important;
+    }}
+    div[data-testid="column"]:nth-child(3) .stButton > button:hover {{
+        background-color: {ACCENT_DARK} !important;
+        border-color: {ACCENT_DARK} !important;
+    }}
+    </style>
+    """, unsafe_allow_html=True)
+    st.button(f"{TOGGLE_ICON}  Mode", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
+
+st.markdown('<div class="section-divider" style="margin-top:0.8rem;"></div>', unsafe_allow_html=True)
 
 
 # ==================== DEMOGRAPHICS ====================
