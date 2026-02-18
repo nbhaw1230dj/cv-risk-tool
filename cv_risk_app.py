@@ -1,10 +1,9 @@
 import streamlit as st
 import math
-import json
 
 st.set_page_config(
     layout="wide",
-    page_title="🫀 Cardiovascular Risk Assessment Tool",
+    page_title="Cardiovascular Risk Assessment",
     initial_sidebar_state="collapsed"
 )
 
@@ -15,6 +14,12 @@ if "theme" not in st.session_state:
 def toggle_theme():
     st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
 
+def reset_all():
+    preserve = {"theme"}
+    keys_to_delete = [k for k in st.session_state.keys() if k not in preserve]
+    for k in keys_to_delete:
+        del st.session_state[k]
+
 is_dark = st.session_state.theme == "dark"
 
 # ========== THEME VARIABLES ==========
@@ -22,14 +27,13 @@ if is_dark:
     BG_PAGE        = "#0f1117"
     BG_SECONDARY   = "#1a1d27"
     BG_INPUT       = "#252836"
-    BG_CARD        = "#1e2130"
     TEXT_PRIMARY   = "#e8eaf0"
     TEXT_SECONDARY = "#9aa0b8"
     TEXT_MUTED     = "#6b7280"
     BORDER_COLOR   = "#2e3347"
     ACCENT         = "#4c9ef8"
     ACCENT_DARK    = "#3a82d6"
-    HEADING_COLOR  = "#cbd5f5"
+    HEADING_COLOR  = "#e8eaf0"
     H2_LEFT_BAR    = "#4c9ef8"
     H2_BG          = "rgba(76, 158, 248, 0.08)"
     DIVIDER        = "#2e3347"
@@ -41,7 +45,8 @@ if is_dark:
     INFO_BORDER    = "#4c9ef8"
     WARN_BG        = "rgba(255, 193, 7, 0.1)"
     WARN_BORDER    = "#ffc107"
-    # Risk card dark variants
+    TOOLBAR_BG     = "#13161f"
+    TOOLBAR_BORDER = "#2e3347"
     RISK_LOW_BG       = "linear-gradient(135deg, #1a3326 0%, #1f3d2e 100%)"
     RISK_LOW_BORDER   = "#28a745"
     RISK_MOD_BG       = "linear-gradient(135deg, #2e2910 0%, #3a3412 100%)"
@@ -57,8 +62,7 @@ if is_dark:
     CF_TITLE          = "#9aa0b8"
     CF_ITEM           = "#9aa0b8"
     CF_BULLET         = "#4c9ef8"
-    TOGGLE_ICON       = "☀️"
-    TOGGLE_LABEL      = "Light Mode"
+    TOGGLE_ICON       = "☀"
     SELECTBOX_COLOR   = "#e8eaf0"
     INPUT_COLOR       = "#e8eaf0"
     CAPTION_COLOR     = "#9aa0b8"
@@ -67,106 +71,204 @@ if is_dark:
     TAB_COLOR         = "#9aa0b8"
     TAB_ACTIVE_COLOR  = "#4c9ef8"
     TAB_ACTIVE_BORDER = "#4c9ef8"
+    UNIT_COLOR        = "#6b7280"
+    TOOLBAR_BTN_BG    = "#1e2130"
+    TOOLBAR_BTN_BORDER= "#2e3347"
+    TOOLBAR_BTN_COLOR = "#9aa0b8"
+    SECTION_LABEL_COLOR = "#4c9ef8"
 else:
-    BG_PAGE        = "#f5f7fa"
+    BG_PAGE        = "#f0f2f6"
     BG_SECONDARY   = "#ffffff"
     BG_INPUT       = "#ffffff"
-    BG_CARD        = "#ffffff"
-    TEXT_PRIMARY   = "#2d3748"
+    TEXT_PRIMARY   = "#1a202c"
     TEXT_SECONDARY = "#4a5568"
     TEXT_MUTED     = "#718096"
-    BORDER_COLOR   = "#e2e8f0"
-    ACCENT         = "#4299e1"
-    ACCENT_DARK    = "#2c5282"
-    HEADING_COLOR  = "#1a365d"
-    H2_LEFT_BAR    = "#4299e1"
-    H2_BG          = "rgba(66, 153, 225, 0.1)"
+    BORDER_COLOR   = "#dde1e9"
+    ACCENT         = "#2563eb"
+    ACCENT_DARK    = "#1e40af"
+    HEADING_COLOR  = "#0f172a"
+    H2_LEFT_BAR    = "#2563eb"
+    H2_BG          = "rgba(37, 99, 235, 0.06)"
     DIVIDER        = "#e2e8f0"
     METRIC_BG      = "#ffffff"
-    METRIC_VAL     = "#1a365d"
-    BTN_BG         = "#2c5282"
-    BTN_HOVER      = "#1a365d"
-    INFO_BG        = "#e6f3ff"
-    INFO_BORDER    = "#4299e1"
-    WARN_BG        = "#fff3cd"
-    WARN_BORDER    = "#ffc107"
-    # Risk card light variants
-    RISK_LOW_BG       = "linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%)"
-    RISK_LOW_BORDER   = "#28a745"
-    RISK_MOD_BG       = "linear-gradient(135deg, #fff3cd 0%, #ffe8a1 100%)"
-    RISK_MOD_BORDER   = "#ffc107"
-    RISK_HIGH_BG      = "linear-gradient(135deg, #ffd6a5 0%, #ffcc80 100%)"
-    RISK_HIGH_BORDER  = "#ff9800"
-    RISK_VH_BG        = "linear-gradient(135deg, #f8d7da 0%, #f1b0b7 100%)"
-    RISK_VH_BORDER    = "#dc3545"
-    RISK_NA_BG        = "linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%)"
-    RISK_NA_BORDER    = "#6c757d"
-    CF_BG             = "rgba(255,255,255,0.8)"
-    CF_BORDER         = "rgba(0,0,0,0.08)"
-    CF_TITLE          = "#2d3748"
-    CF_ITEM           = "#4a5568"
-    CF_BULLET         = "#4299e1"
+    METRIC_VAL     = "#0f172a"
+    BTN_BG         = "#2563eb"
+    BTN_HOVER      = "#1e40af"
+    INFO_BG        = "#eff6ff"
+    INFO_BORDER    = "#2563eb"
+    WARN_BG        = "#fffbeb"
+    WARN_BORDER    = "#f59e0b"
+    TOOLBAR_BG     = "#ffffff"
+    TOOLBAR_BORDER = "#dde1e9"
+    RISK_LOW_BG       = "linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%)"
+    RISK_LOW_BORDER   = "#16a34a"
+    RISK_MOD_BG       = "linear-gradient(135deg, #fefce8 0%, #fef08a 100%)"
+    RISK_MOD_BORDER   = "#ca8a04"
+    RISK_HIGH_BG      = "linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%)"
+    RISK_HIGH_BORDER  = "#ea580c"
+    RISK_VH_BG        = "linear-gradient(135deg, #fff1f2 0%, #fecdd3 100%)"
+    RISK_VH_BORDER    = "#dc2626"
+    RISK_NA_BG        = "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)"
+    RISK_NA_BORDER    = "#94a3b8"
+    CF_BG             = "rgba(255,255,255,0.9)"
+    CF_BORDER         = "rgba(0,0,0,0.07)"
+    CF_TITLE          = "#374151"
+    CF_ITEM           = "#4b5563"
+    CF_BULLET         = "#2563eb"
     TOGGLE_ICON       = "🌙"
-    TOGGLE_LABEL      = "Dark Mode"
-    SELECTBOX_COLOR   = "#2d3748"
-    INPUT_COLOR       = "#2d3748"
-    CAPTION_COLOR     = "#4a5568"
-    TAB_BG            = "#f7fafc"
+    SELECTBOX_COLOR   = "#1a202c"
+    INPUT_COLOR       = "#1a202c"
+    CAPTION_COLOR     = "#64748b"
+    TAB_BG            = "#f1f5f9"
     TAB_ACTIVE_BG     = "#ffffff"
-    TAB_COLOR         = "#4a5568"
-    TAB_ACTIVE_COLOR  = "#2c5282"
-    TAB_ACTIVE_BORDER = "#4299e1"
+    TAB_COLOR         = "#64748b"
+    TAB_ACTIVE_COLOR  = "#1e40af"
+    TAB_ACTIVE_BORDER = "#2563eb"
+    UNIT_COLOR        = "#94a3b8"
+    TOOLBAR_BTN_BG    = "#f8fafc"
+    TOOLBAR_BTN_BORDER= "#dde1e9"
+    TOOLBAR_BTN_COLOR = "#475569"
+    SECTION_LABEL_COLOR = "#2563eb"
 
 # ========== INJECT CSS ==========
 st.markdown(f"""
 <style>
-    /* ---- Toolbar / menu hiding ---- */
-    button[kind="header"] {{ display: none !important; }}
-    [data-testid="stToolbar"] {{ display: none !important; }}
-    #MainMenu {{ display: none !important; }}
-    .stDeployButton {{ display: none !important; }}
+    /* ---- Hide Streamlit chrome ---- */
+    button[kind="header"], [data-testid="stToolbar"],
+    #MainMenu, .stDeployButton, footer {{
+        display: none !important;
+    }}
 
-    /* ---- Global page ---- */
-    html, body, .stApp, .main, [data-testid="stAppViewContainer"],
+    /* ---- Global page background ---- */
+    html, body, .stApp, .main,
+    [data-testid="stAppViewContainer"],
     [data-testid="stAppViewBlockContainer"] {{
         background-color: {BG_PAGE} !important;
         color: {TEXT_PRIMARY} !important;
     }}
 
-    /* ---- Block container ---- */
+    /* ---- Block container: tight top padding ---- */
     .block-container {{
         background-color: {BG_PAGE} !important;
-        padding-top: 2rem !important;
+        padding-top: 0 !important;
+        padding-bottom: 3rem !important;
+        max-width: 1200px !important;
     }}
 
-    /* ---- Universal text reset ---- */
+    /* ---- Universal text color ---- */
     .stApp *, p, span, div, label, li {{
         color: {TEXT_PRIMARY} !important;
     }}
 
-    /* ---- Headings ---- */
-    h1 {{
-        color: {HEADING_COLOR} !important;
-        font-weight: 700 !important;
-        border-bottom: 3px solid {ACCENT} !important;
-        padding-bottom: 0.8rem !important;
-        margin-bottom: 1.5rem !important;
-        margin-top: 0 !important;
+    /* ---- TOOLBAR ---- */
+    .cv-toolbar {{
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: {TOOLBAR_BG};
+        border-bottom: 1px solid {TOOLBAR_BORDER};
+        padding: 0.55rem 1.2rem;
+        margin: 0 -1rem 1.5rem -1rem;
+        position: sticky;
+        top: 0;
+        z-index: 999;
+        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
     }}
+    .cv-toolbar-title {{
+        font-size: 0.95rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        color: {HEADING_COLOR} !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }}
+    .cv-toolbar-title .cv-dot {{
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #ef4444;
+        display: inline-block;
+        box-shadow: 0 0 6px rgba(239,68,68,0.5);
+    }}
+    .cv-toolbar-actions {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }}
+    .cv-toolbar-btn {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        background: {TOOLBAR_BTN_BG};
+        color: {TOOLBAR_BTN_COLOR} !important;
+        border: 1px solid {TOOLBAR_BTN_BORDER};
+        border-radius: 6px;
+        padding: 0.3rem 0.75rem;
+        font-size: 0.78rem;
+        font-weight: 500;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s, border-color 0.15s;
+        white-space: nowrap;
+    }}
+    .cv-toolbar-btn:hover {{
+        border-color: {ACCENT};
+        background: {BG_PAGE};
+    }}
+    .cv-toolbar-btn.accent {{
+        background: {ACCENT};
+        color: #ffffff !important;
+        border-color: {ACCENT};
+    }}
+    .cv-toolbar-btn.accent:hover {{
+        background: {ACCENT_DARK};
+    }}
+
+    /* ---- Section headers (h2) ---- */
     h2 {{
         color: {TEXT_PRIMARY} !important;
-        font-weight: 600 !important;
-        margin-top: 2.5rem !important;
-        margin-bottom: 1.5rem !important;
-        border-left: 5px solid {H2_LEFT_BAR} !important;
-        padding-left: 1.2rem !important;
-        padding-top: 0.6rem !important;
-        padding-bottom: 0.6rem !important;
-        background: linear-gradient(90deg, {H2_BG} 0%, transparent 100%) !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        color: {SECTION_LABEL_COLOR} !important;
+        margin-top: 1.6rem !important;
+        margin-bottom: 0.6rem !important;
+        padding: 0 !important;
+        border: none !important;
+        background: none !important;
     }}
+
+    /* ---- h3 ---- */
     h3 {{
         color: {TEXT_PRIMARY} !important;
         font-weight: 600 !important;
+        font-size: 1rem !important;
+        margin-top: 0 !important;
+    }}
+
+    /* ---- Section card wrapper ---- */
+    .cv-section {{
+        background: {BG_SECONDARY};
+        border: 1px solid {BORDER_COLOR};
+        border-radius: 10px;
+        padding: 1rem 1.2rem 0.8rem 1.2rem;
+        margin-bottom: 0.8rem;
+    }}
+
+    /* ---- Input field rows with unit label ---- */
+    .input-row {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }}
+    .input-unit {{
+        font-size: 0.78rem;
+        color: {UNIT_COLOR} !important;
+        white-space: nowrap;
+        padding-top: 1.6rem;
+        min-width: 42px;
     }}
 
     /* ---- Number inputs ---- */
@@ -175,107 +277,104 @@ st.markdown(f"""
     input[type="text"] {{
         background-color: {BG_INPUT} !important;
         color: {INPUT_COLOR} !important;
-        border: 2px solid {BORDER_COLOR} !important;
+        border: 1.5px solid {BORDER_COLOR} !important;
         border-radius: 6px !important;
         caret-color: {INPUT_COLOR} !important;
+        font-size: 0.9rem !important;
     }}
     .stNumberInput input:focus {{
         border-color: {ACCENT} !important;
-        box-shadow: 0 0 0 3px {ACCENT}33 !important;
+        box-shadow: 0 0 0 3px {ACCENT}22 !important;
         outline: none !important;
     }}
-    /* Stepper buttons */
+    /* Hide stepper buttons */
     .stNumberInput [data-testid="stNumberInputStepUp"],
-    .stNumberInput [data-testid="stNumberInputStepDown"],
-    .stNumberInput button {{
-        background-color: {BG_INPUT} !important;
-        color: {INPUT_COLOR} !important;
-        border-color: {BORDER_COLOR} !important;
+    .stNumberInput [data-testid="stNumberInputStepDown"] {{
+        display: none !important;
     }}
-    .stNumberInput [data-testid="stNumberInputStepUp"]:hover,
-    .stNumberInput [data-testid="stNumberInputStepDown"]:hover,
-    .stNumberInput button:hover {{
-        background-color: {BORDER_COLOR} !important;
+    /* Tighten number input wrapper */
+    .stNumberInput > div {{
+        gap: 0 !important;
     }}
 
     /* ---- Selectbox / Dropdown ---- */
     .stSelectbox [data-baseweb="select"] > div,
-    .stSelectbox [data-baseweb="select"] > div > div,
-    [data-baseweb="select"] [data-testid="stMarkdownContainer"] {{
+    .stSelectbox [data-baseweb="select"] > div > div {{
         background-color: {BG_INPUT} !important;
         color: {SELECTBOX_COLOR} !important;
-        border-color: {BORDER_COLOR} !important;
+        border: 1.5px solid {BORDER_COLOR} !important;
+        border-radius: 6px !important;
     }}
     .stSelectbox [data-baseweb="select"] span,
     .stSelectbox [data-baseweb="select"] div {{
         color: {SELECTBOX_COLOR} !important;
         background-color: transparent !important;
     }}
-    /* Dropdown popup list */
-    [data-baseweb="popover"],
-    [data-baseweb="menu"],
-    [role="listbox"],
-    [data-baseweb="list"] {{
+    [data-baseweb="popover"], [data-baseweb="menu"],
+    [role="listbox"], [data-baseweb="list"] {{
         background-color: {BG_INPUT} !important;
         border-color: {BORDER_COLOR} !important;
     }}
-    [role="option"],
-    [data-baseweb="option"] {{
+    [role="option"], [data-baseweb="option"] {{
         background-color: {BG_INPUT} !important;
         color: {SELECTBOX_COLOR} !important;
     }}
-    [role="option"]:hover,
-    [data-baseweb="option"]:hover {{
+    [role="option"]:hover, [data-baseweb="option"]:hover {{
         background-color: {BORDER_COLOR} !important;
     }}
 
     /* ---- Radio buttons ---- */
-    .stRadio label, .stRadio div {{
-        color: {TEXT_PRIMARY} !important;
-    }}
+    .stRadio label, .stRadio div,
     .stRadio [data-testid="stMarkdownContainer"] p {{
         color: {TEXT_PRIMARY} !important;
+    }}
+    .stRadio > div {{
+        gap: 0.5rem !important;
     }}
 
     /* ---- Checkboxes ---- */
     .stCheckbox label, .stCheckbox span, .stCheckbox p {{
         color: {TEXT_PRIMARY} !important;
-        font-weight: 500 !important;
+        font-weight: 400 !important;
+        font-size: 0.88rem !important;
     }}
     .stCheckbox {{
-        margin-bottom: 0.4rem !important;
+        margin-bottom: 0.25rem !important;
+        padding: 0 !important;
     }}
 
-    /* ---- Labels for all widgets ---- */
-    .stSelectbox label,
-    .stNumberInput label,
-    .stTextInput label,
-    .stRadio label,
+    /* ---- Widget labels ---- */
+    .stSelectbox label, .stNumberInput label,
+    .stTextInput label, .stRadio label,
     [data-testid="stWidgetLabel"] {{
-        color: {TEXT_PRIMARY} !important;
+        color: {TEXT_SECONDARY} !important;
         font-weight: 500 !important;
+        font-size: 0.82rem !important;
+        margin-bottom: 0.15rem !important;
     }}
 
     /* ---- Tabs ---- */
     .stTabs [data-baseweb="tab-list"] {{
-        background-color: {BG_SECONDARY} !important;
-        gap: 0.5rem !important;
+        background-color: {BG_PAGE} !important;
+        gap: 0.25rem !important;
+        border-bottom: 2px solid {BORDER_COLOR} !important;
     }}
     .stTabs [data-baseweb="tab"] {{
         color: {TAB_COLOR} !important;
-        background-color: {TAB_BG} !important;
-        border-radius: 8px 8px 0 0 !important;
-        padding: 0.75rem 1.5rem !important;
+        background-color: transparent !important;
+        border-radius: 6px 6px 0 0 !important;
+        padding: 0.55rem 1.2rem !important;
         font-weight: 500 !important;
+        font-size: 0.85rem !important;
     }}
     .stTabs [aria-selected="true"] {{
         color: {TAB_ACTIVE_COLOR} !important;
         background-color: {TAB_ACTIVE_BG} !important;
-        border-bottom: 3px solid {TAB_ACTIVE_BORDER} !important;
+        border-bottom: 2px solid {TAB_ACTIVE_BORDER} !important;
     }}
     .stTabs [data-baseweb="tab-panel"] {{
         background-color: {BG_SECONDARY} !important;
-        padding: 1.5rem !important;
+        padding: 1.2rem !important;
         border-radius: 0 0 8px 8px !important;
         border: 1px solid {BORDER_COLOR} !important;
         border-top: none !important;
@@ -284,64 +383,48 @@ st.markdown(f"""
     /* ---- Metric widget ---- */
     [data-testid="stMetric"] {{
         background-color: {METRIC_BG} !important;
-        padding: 1.2rem !important;
+        padding: 0.9rem 1rem !important;
         border-radius: 8px !important;
         border: 1px solid {BORDER_COLOR} !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     }}
     [data-testid="stMetricLabel"] {{
         color: {TEXT_SECONDARY} !important;
+        font-size: 0.78rem !important;
     }}
     [data-testid="stMetricValue"] {{
         color: {METRIC_VAL} !important;
         font-weight: 700 !important;
+        font-size: 1.5rem !important;
     }}
 
-    /* ---- Alert boxes (info, warning, success) ---- */
-    [data-testid="stAlert"],
-    .stAlert {{
-        border-radius: 6px !important;
-    }}
-    div[data-testid="stAlert"][kind="info"],
-    .element-container div[kind="info"] {{
+    /* ---- Alert boxes ---- */
+    [data-testid="stAlert"] {{ border-radius: 6px !important; }}
+    div[data-testid="stAlert"][kind="info"] {{
         background-color: {INFO_BG} !important;
-        border-left: 5px solid {INFO_BORDER} !important;
+        border-left: 4px solid {INFO_BORDER} !important;
     }}
-    div[data-testid="stAlert"][kind="warning"],
-    .element-container div[kind="warning"] {{
+    div[data-testid="stAlert"][kind="warning"] {{
         background-color: {WARN_BG} !important;
-        border-left: 5px solid {WARN_BORDER} !important;
+        border-left: 4px solid {WARN_BORDER} !important;
     }}
 
-    /* ---- Buttons ---- */
+    /* ---- Streamlit default buttons ---- */
     .stButton > button {{
         background-color: {BTN_BG} !important;
         color: #ffffff !important;
         font-weight: 500 !important;
-        border-radius: 8px !important;
+        border-radius: 6px !important;
         border: none !important;
-        padding: 0.6rem 1.8rem !important;
-        transition: all 0.25s ease !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15) !important;
+        padding: 0.45rem 1.2rem !important;
+        font-size: 0.85rem !important;
+        transition: background 0.2s !important;
+        box-shadow: none !important;
     }}
     .stButton > button:hover {{
         background-color: {BTN_HOVER} !important;
-        transform: translateY(-1px) !important;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-    }}
-
-    /* ---- Theme toggle button (special override) ---- */
-    .theme-toggle-btn .stButton > button {{
-        background-color: transparent !important;
-        color: {TEXT_PRIMARY} !important;
-        border: 2px solid {BORDER_COLOR} !important;
-        font-size: 0.85rem !important;
-        padding: 0.4rem 1rem !important;
-        box-shadow: none !important;
-    }}
-    .theme-toggle-btn .stButton > button:hover {{
-        background-color: {BORDER_COLOR} !important;
         transform: none !important;
+        box-shadow: none !important;
     }}
 
     /* ---- Markdown ---- */
@@ -355,182 +438,155 @@ st.markdown(f"""
     /* ---- Caption ---- */
     .stCaption, [data-testid="stCaptionContainer"] {{
         color: {CAPTION_COLOR} !important;
+        font-size: 0.78rem !important;
     }}
 
-    /* ---- HR divider ---- */
+    /* ---- HR ---- */
     hr {{
         border: none !important;
-        border-top: 2px solid {DIVIDER} !important;
-        margin: 2.5rem 0 !important;
+        border-top: 1px solid {DIVIDER} !important;
+        margin: 1rem 0 !important;
     }}
 
-    /* ---- Risk cards (custom HTML) ---- */
+    /* ---- Risk cards ---- */
     .risk-card {{
-        border-radius: 10px !important;
-        padding: 1.5rem !important;
-        margin: 0.5rem 0 !important;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1) !important;
-        border: 1px solid {BORDER_COLOR} !important;
-        transition: transform 0.2s, box-shadow 0.2s !important;
+        border-radius: 10px;
+        padding: 1.2rem 1.4rem;
+        margin: 0;
+        border: 1px solid {BORDER_COLOR};
+        transition: transform 0.15s, box-shadow 0.15s;
     }}
     .risk-card:hover {{
-        transform: translateY(-2px) !important;
-        box-shadow: 0 6px 12px rgba(0,0,0,0.15) !important;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }}
-    .risk-card h1, .risk-card h3, .risk-card p {{
-        color: {TEXT_PRIMARY} !important;
-    }}
-    .risk-low  {{ background: {RISK_LOW_BG}  !important; border-left: 5px solid {RISK_LOW_BORDER}  !important; }}
-    .risk-moderate {{ background: {RISK_MOD_BG}  !important; border-left: 5px solid {RISK_MOD_BORDER}  !important; }}
-    .risk-high {{ background: {RISK_HIGH_BG} !important; border-left: 5px solid {RISK_HIGH_BORDER} !important; }}
-    .risk-veryhigh {{ background: {RISK_VH_BG} !important; border-left: 5px solid {RISK_VH_BORDER} !important; }}
-    .risk-unavailable {{ background: {RISK_NA_BG} !important; border-left: 5px solid {RISK_NA_BORDER} !important; }}
+    .risk-card h3, .risk-card h1, .risk-card p {{ color: {TEXT_PRIMARY} !important; }}
+    .risk-low       {{ background: {RISK_LOW_BG};  border-left: 4px solid {RISK_LOW_BORDER}; }}
+    .risk-moderate  {{ background: {RISK_MOD_BG};  border-left: 4px solid {RISK_MOD_BORDER}; }}
+    .risk-high      {{ background: {RISK_HIGH_BG}; border-left: 4px solid {RISK_HIGH_BORDER}; }}
+    .risk-veryhigh  {{ background: {RISK_VH_BG};   border-left: 4px solid {RISK_VH_BORDER}; }}
+    .risk-unavailable {{ background: {RISK_NA_BG}; border-left: 4px solid {RISK_NA_BORDER}; }}
 
-    /* ---- Contributing factors block ---- */
+    /* ---- Contributing factors ---- */
     .contributing-factors {{
-        background-color: {CF_BG} !important;
-        border-radius: 8px !important;
-        padding: 1rem !important;
-        margin-top: 1.2rem !important;
-        font-size: 0.9rem !important;
-        border: 1px solid {CF_BORDER} !important;
+        background-color: {CF_BG};
+        border-radius: 6px;
+        padding: 0.75rem 0.9rem;
+        margin-top: 0.8rem;
+        font-size: 0.82rem;
+        border: 1px solid {CF_BORDER};
     }}
     .factor-title {{
-        font-weight: 600 !important;
+        font-weight: 600;
         color: {CF_TITLE} !important;
-        margin-bottom: 0.6rem !important;
-        font-size: 0.85rem !important;
-        text-transform: uppercase !important;
-        letter-spacing: 0.5px !important;
+        margin-bottom: 0.4rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }}
     .factor-item {{
         color: {CF_ITEM} !important;
-        padding: 0.3rem 0 0.3rem 1.2rem !important;
-        position: relative !important;
-        line-height: 1.5 !important;
+        padding: 0.2rem 0 0.2rem 1rem;
+        position: relative;
+        line-height: 1.45;
     }}
     .factor-item:before {{
-        content: "▪" !important;
-        position: absolute !important;
-        left: 0 !important;
-        font-weight: bold !important;
-        color: {CF_BULLET} !important;
+        content: "▪";
+        position: absolute;
+        left: 0;
+        color: {CF_BULLET};
     }}
 
-    /* ---- Premium link buttons ---- */
+    /* ---- Premium links ---- */
     .premium-link-container {{
-        display: flex !important;
-        gap: 1rem !important;
-        margin: 1.5rem 0 !important;
-        flex-wrap: wrap !important;
+        display: flex; gap: 0.75rem; margin: 0.5rem 0 1rem 0; flex-wrap: wrap;
     }}
     .premium-link {{
-        flex: 1 !important;
-        min-width: 220px !important;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        flex: 1; min-width: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white !important;
-        padding: 1.2rem 1.5rem !important;
-        border-radius: 12px !important;
-        text-decoration: none !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 15px rgba(102,126,234,0.4) !important;
-        text-align: center !important;
+        padding: 0.9rem 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 3px 10px rgba(102,126,234,0.35);
+        text-align: center;
     }}
-    .premium-link:hover {{
-        transform: translateY(-4px) !important;
-        box-shadow: 0 8px 25px rgba(102,126,234,0.6) !important;
-    }}
-    .premium-link-title {{
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        margin-bottom: 0.3rem !important;
-        color: white !important;
-    }}
-    .premium-link-subtitle {{
-        font-size: 0.85rem !important;
-        opacity: 0.9 !important;
-        color: white !important;
-    }}
-    .premium-link.qrisk  {{ background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important; box-shadow: 0 4px 15px rgba(240,147,251,0.4) !important; }}
-    .premium-link.qrisk:hover {{ box-shadow: 0 8px 25px rgba(240,147,251,0.6) !important; }}
-    .premium-link.lai    {{ background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important; box-shadow: 0 4px 15px rgba(79,172,254,0.4) !important; }}
-    .premium-link.lai:hover {{ box-shadow: 0 8px 25px rgba(79,172,254,0.6) !important; }}
+    .premium-link:hover {{ transform: translateY(-2px); box-shadow: 0 6px 18px rgba(102,126,234,0.5); }}
+    .premium-link-title  {{ font-size: 0.95rem; font-weight: 600; margin-bottom: 0.15rem; color: white !important; }}
+    .premium-link-subtitle {{ font-size: 0.75rem; opacity: 0.9; color: white !important; }}
+    .premium-link.qrisk {{ background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); box-shadow: 0 3px 10px rgba(240,147,251,0.35); }}
+    .premium-link.qrisk:hover {{ box-shadow: 0 6px 18px rgba(240,147,251,0.5); }}
+    .premium-link.lai   {{ background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 3px 10px rgba(79,172,254,0.35); }}
+    .premium-link.lai:hover {{ box-shadow: 0 6px 18px rgba(79,172,254,0.5); }}
 
     /* ---- Section divider ---- */
     .section-divider {{
-        border: none !important;
-        height: 3px !important;
-        background: linear-gradient(90deg, {ACCENT} 0%, transparent 100%) !important;
-        margin: 3rem 0 !important;
+        border: none; height: 1px;
+        background: {DIVIDER};
+        margin: 1.2rem 0;
     }}
 
-    /* ---- Disabled widget text ---- */
-    .stCheckbox [disabled] + span,
-    .stCheckbox input:disabled + span {{
-        color: {TEXT_MUTED} !important;
-        opacity: 0.7 !important;
+    /* ---- Thin section separator label ---- */
+    .section-sep {{
+        display: flex; align-items: center; gap: 0.6rem;
+        margin: 1.4rem 0 0.6rem 0;
+    }}
+    .section-sep-label {{
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+        text-transform: uppercase; color: {SECTION_LABEL_COLOR} !important;
+        white-space: nowrap;
+    }}
+    .section-sep-line {{
+        flex: 1; height: 1px; background: {BORDER_COLOR};
     }}
 
-    /* ---- Spinner text ---- */
-    .stSpinner > div > div {{
-        border-top-color: {ACCENT} !important;
-    }}
+    /* ---- Disabled checkbox ---- */
+    .stCheckbox input:disabled + span {{ color: {TEXT_MUTED} !important; opacity: 0.6 !important; }}
 
-    /* ---- Recommendation box ---- */
-    .recommendation-box {{
-        background-color: {BG_SECONDARY} !important;
-        border-radius: 8px !important;
-        padding: 1.5rem !important;
-        margin: 1rem 0 !important;
-        border-left: 4px solid {ACCENT} !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.08) !important;
-    }}
+    /* ---- Spinner ---- */
+    .stSpinner > div > div {{ border-top-color: {ACCENT} !important; }}
 
-    /* ---- iOS Safari fix: prevent font scaling ---- */
+    /* ---- Scrollbars ---- */
+    ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+    ::-webkit-scrollbar-track {{ background: {BG_PAGE}; }}
+    ::-webkit-scrollbar-thumb {{ background: {BORDER_COLOR}; border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb:hover {{ background: {ACCENT}; }}
+
+    /* ---- iOS Safari: prevent font scaling on inputs ---- */
     @media screen and (max-width: 768px) {{
-        input, select, textarea {{
-            font-size: 16px !important;
-        }}
+        input, select, textarea {{ font-size: 16px !important; }}
     }}
 
-    /* ---- Force input/select colors on all platforms ---- */
+    /* ---- Force input colors cross-platform ---- */
     input, select, textarea, [contenteditable] {{
         background-color: {BG_INPUT} !important;
         color: {INPUT_COLOR} !important;
     }}
-
-    /* ---- Streamlit's internal iframe/component wrappers ---- */
-    iframe {{
-        background-color: {BG_PAGE} !important;
-    }}
-
-    /* ---- Scrollbar theming (non-Safari) ---- */
-    ::-webkit-scrollbar {{ width: 8px; height: 8px; }}
-    ::-webkit-scrollbar-track {{ background: {BG_PAGE}; }}
-    ::-webkit-scrollbar-thumb {{ background: {BORDER_COLOR}; border-radius: 4px; }}
-    ::-webkit-scrollbar-thumb:hover {{ background: {ACCENT}; }}
 </style>
 """, unsafe_allow_html=True)
 
 
 # ========== HELPER FUNCTIONS ==========
 
-def na_number(container, label, default=None, minv=0.0, maxv=500.0, step=1.0, key=None):
-    col1, col2 = container.columns([5, 1])
+def opt_num(container, label, minv=0.0, maxv=9999.0, step=1.0, key=None, fmt="%.0f"):
+    """Numeric input that returns None when left empty (value=None)."""
     minv = float(minv)
     maxv = float(maxv)
     step = float(step)
-    if default is None:
-        default = minv
-    else:
-        default = float(default)
-    val = col1.number_input(label, min_value=minv, max_value=maxv, value=default, step=step, key=f"num_{label}_{key}")
-    na = col2.checkbox("NA", key=f"na_{label}_{key}")
-    return None if na else float(val)
+    val = container.number_input(
+        label,
+        min_value=minv,
+        max_value=maxv,
+        value=None,
+        step=step,
+        format=fmt,
+        placeholder="—",
+        key=key
+    )
+    return val
 
 
 def bmi_calc(h, w):
@@ -574,15 +630,15 @@ def get_contributing_factors_aha(age, sex, tc, hdl, sbp, bp_treated, diabetes, s
     if diabetes == "Yes":
         factors.append("Diabetes mellitus")
     if tc and tc >= 240:
-        factors.append(f"High total cholesterol ({tc} mg/dL)")
+        factors.append(f"High total cholesterol ({tc:.0f} mg/dL)")
     if hdl and hdl < 40:
-        factors.append(f"Low HDL cholesterol ({hdl} mg/dL)")
+        factors.append(f"Low HDL cholesterol ({hdl:.0f} mg/dL)")
     if sbp and sbp >= 160:
-        factors.append(f"Severe hypertension (SBP {sbp} mmHg)")
+        factors.append(f"Severe hypertension (SBP {sbp:.0f} mmHg)")
     elif sbp and sbp >= 140:
-        factors.append(f"Stage 2 hypertension (SBP {sbp} mmHg)")
+        factors.append(f"Stage 2 hypertension (SBP {sbp:.0f} mmHg)")
     elif sbp and sbp >= 130:
-        factors.append(f"Stage 1 hypertension (SBP {sbp} mmHg)")
+        factors.append(f"Stage 1 hypertension (SBP {sbp:.0f} mmHg)")
     return factors
 
 
@@ -603,9 +659,9 @@ def get_contributing_factors_qrisk(age, sex, smoking, diabetes, bmi, sbp, tc_hdl
     elif bmi and bmi >= 30:
         factors.append(f"Obesity (BMI {bmi:.1f})")
     if sbp and sbp >= 160:
-        factors.append(f"Severe hypertension (SBP {sbp} mmHg)")
+        factors.append(f"Severe hypertension (SBP {sbp:.0f} mmHg)")
     elif sbp and sbp >= 140:
-        factors.append(f"Hypertension (SBP {sbp} mmHg)")
+        factors.append(f"Hypertension (SBP {sbp:.0f} mmHg)")
     if tc_hdl_ratio and tc_hdl_ratio >= 6:
         factors.append(f"High TC/HDL ratio ({tc_hdl_ratio:.1f})")
     elif tc_hdl_ratio and tc_hdl_ratio >= 5:
@@ -641,13 +697,13 @@ def get_contributing_factors_lai(ascvd, ckd, diabetes, duration, smoke, mets, fh
     if fh_fh:
         factors.append("Familial hypercholesterolemia")
     if lpa and lpa >= 50:
-        factors.append(f"Elevated Lp(a) ({lpa} mg/dL)")
+        factors.append(f"Elevated Lp(a) ({lpa:.0f} mg/dL)")
     if apob and apob >= 130:
-        factors.append(f"Elevated ApoB ({apob} mg/dL)")
+        factors.append(f"Elevated ApoB ({apob:.0f} mg/dL)")
     if ldl and ldl >= 190:
-        factors.append(f"Severe hypercholesterolemia (LDL {ldl} mg/dL)")
+        factors.append(f"Severe hypercholesterolemia (LDL {ldl:.0f} mg/dL)")
     elif ldl and ldl >= 160:
-        factors.append(f"High LDL cholesterol ({ldl} mg/dL)")
+        factors.append(f"High LDL cholesterol ({ldl:.0f} mg/dL)")
     if prem_ascvd:
         factors.append("Premature ASCVD in first-degree relatives")
     if fh_dm:
@@ -702,11 +758,7 @@ def generate_fallback_summary(aha_cat, qrisk_cat, lai_cat):
     if not scores:
         return "Insufficient data for comprehensive risk assessment."
     max_risk = max(scores, key=lambda x: x[0])
-    summary = f"""**Unified Clinical Recommendation:**
-
-**Overall Risk Level:** {max_risk[1]} (driven primarily by {max_risk[2]})
-
-"""
+    summary = f"""**Overall Risk Level:** {max_risk[1]} (driven primarily by {max_risk[2]})\n\n"""
     if max_risk[1] in ["High", "Very High"]:
         summary += """**Statin Therapy:** RECOMMENDED
 - High-intensity statin (Atorvastatin 40-80mg or Rosuvastatin 20-40mg)
@@ -718,19 +770,12 @@ def generate_fallback_summary(aha_cat, qrisk_cat, lai_cat):
 - Non-HDL-C: <100 mg/dL (Very High: <80 mg/dL)
 - ApoB: <80 mg/dL (Very High: <65 mg/dL)
 
-**Lifestyle Interventions:**
-- Heart-healthy Indian diet (reduce saturated fats, increase fiber)
-- Regular physical activity (150 min/week moderate intensity)
-- Weight management if overweight
-- Smoking cessation if applicable
+**Lifestyle:** Heart-healthy diet · Physical activity ≥150 min/week · Weight management · Smoking cessation
 
-**Monitoring:**
-- Lipid panel at 4-6 weeks after initiation
-- Monitor liver enzymes and CK if symptomatic
-- Reassess every 3 months until targets achieved, then 6-monthly
+**Monitoring:** Lipid panel at 4-6 weeks → every 3 months until targets achieved → 6-monthly
 """
     elif max_risk[1] == "Moderate":
-        summary += """**Statin Therapy:** CONSIDER (Shared decision-making)
+        summary += """**Statin Therapy:** CONSIDER (shared decision-making)
 - Moderate-intensity statin (Atorvastatin 10-20mg or Rosuvastatin 5-10mg)
 - Especially recommended for South Asian ethnicity
 
@@ -738,26 +783,18 @@ def generate_fallback_summary(aha_cat, qrisk_cat, lai_cat):
 - LDL-C: <100 mg/dL (consider <70 mg/dL)
 - Non-HDL-C: <130 mg/dL (consider <100 mg/dL)
 
-**Lifestyle Interventions:**
-- Aggressive lifestyle modification as first-line
-- Heart-healthy diet and regular exercise
-- Weight reduction if BMI ≥25 kg/m²
+**Lifestyle:** Aggressive lifestyle modification as first-line · Weight reduction if BMI ≥25
 
-**Monitoring:**
-- Reassess in 3-6 months with lifestyle changes
-- Annual lipid profile and risk assessment
+**Monitoring:** Reassess in 3-6 months · Annual lipid profile and risk assessment
 """
     else:
-        summary += """**Statin Therapy:** NOT RECOMMENDED
-- Continue heart-healthy lifestyle
+        summary += """**Statin Therapy:** NOT RECOMMENDED — continue lifestyle measures
 
-**Targets:**
-- Maintain LDL-C <100 mg/dL
-- Non-HDL-C <130 mg/dL
+**Targets:** LDL-C <100 mg/dL · Non-HDL-C <130 mg/dL
 
-**Lifestyle Interventions:**
-- Maintain healthy diet and regular physical activity
-- Periodic reassessment every 3-5 years
+**Lifestyle:** Maintain healthy diet and regular physical activity
+
+**Monitoring:** Periodic reassessment every 3-5 years
 """
     return summary
 
@@ -863,245 +900,267 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
     return round(min(risk_10yr, 100), 1)
 
 
-# ========== APP HEADER ==========
+# ==================== TOOLBAR ====================
+st.markdown(f"""
+<div class="cv-toolbar">
+  <div class="cv-toolbar-title">
+    <span class="cv-dot"></span>
+    Cardiovascular Risk Assessment
+  </div>
+  <div class="cv-toolbar-actions" id="toolbar-actions">
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
-# Theme toggle in top-right
-header_col1, header_col2 = st.columns([6, 1])
-with header_col1:
-    st.title("🫀 Cardiovascular Risk Assessment Tool")
-    st.markdown("*Evidence-based risk stratification for clinical decision support*")
-with header_col2:
-    st.markdown('<div class="theme-toggle-btn">', unsafe_allow_html=True)
-    st.button(f"{TOGGLE_ICON} {TOGGLE_LABEL}", on_click=toggle_theme, key="theme_btn")
-    st.markdown('</div>', unsafe_allow_html=True)
+# Render toolbar buttons via Streamlit columns (positioned absolutely via CSS trick)
+tb1, tb2, tb3, tb_space = st.columns([1, 1, 1, 6])
+with tb1:
+    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
+        reset_all()
+        st.rerun()
+with tb2:
+    st.button(f"{TOGGLE_ICON} Theme", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
+with tb3:
+    st.markdown("""
+    <div style="padding-top:0.3rem;">
+        <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator" target="_blank"
+           style="font-size:0.75rem;color:#64748b;text-decoration:none;">↗ AHA</a>
+        &nbsp;
+        <a href="https://qrisk.org/" target="_blank"
+           style="font-size:0.75rem;color:#64748b;text-decoration:none;">↗ QRISK</a>
+    </div>
+    """, unsafe_allow_html=True)
 
-st.markdown("")
+# Override toolbar button styling to look like toolbar actions
+st.markdown(f"""
+<style>
+div[data-testid="column"]:nth-child(1) .stButton > button,
+div[data-testid="column"]:nth-child(2) .stButton > button {{
+    background-color: {TOOLBAR_BTN_BG} !important;
+    color: {TOOLBAR_BTN_COLOR} !important;
+    border: 1px solid {TOOLBAR_BTN_BORDER} !important;
+    font-size: 0.78rem !important;
+    padding: 0.28rem 0.7rem !important;
+    border-radius: 5px !important;
+    font-weight: 500 !important;
+    width: 100% !important;
+    margin-top: 0 !important;
+}}
+div[data-testid="column"]:nth-child(1) .stButton > button:hover,
+div[data-testid="column"]:nth-child(2) .stButton > button:hover {{
+    border-color: {ACCENT} !important;
+    background: {BG_PAGE} !important;
+}}
+</style>
+""", unsafe_allow_html=True)
 
-# ========== DEMOGRAPHICS ==========
-st.header("Demographics")
-st.markdown("")
+st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
 
-age = na_number(st.container(), "Age (years)", minv=0, maxv=100, key="age")
-st.markdown("")
 
-colA, colB, colC = st.columns(3)
-sex = colA.selectbox("Sex", ["Male", "Female"])
-eth = colB.selectbox("Ethnicity", ["Indian", "South Asian", "White", "Black", "Other"])
+# ==================== DEMOGRAPHICS ====================
+def sep(label):
+    st.markdown(f'<div class="section-sep"><span class="section-sep-label">{label}</span><div class="section-sep-line"></div></div>', unsafe_allow_html=True)
 
-st.markdown("")
+sep("Patient Demographics")
 
-height = na_number(colA, "Height (cm)", minv=100, maxv=220, key="h")
-weight = na_number(colB, "Weight (kg)", minv=30, maxv=200, key="w")
-bmi = bmi_calc(height, weight)
-colC.metric("BMI (kg/m²)", f"{bmi:.1f}" if bmi is not None else "NA")
+d1, d2, d3, d4 = st.columns([1, 1, 1, 1])
+with d1:
+    age_val = opt_num(d1, "Age", minv=1, maxv=110, step=1, key="age")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">years</span>', unsafe_allow_html=True)
 
-# ========== VITALS ==========
-st.header("Vital Signs")
-st.markdown("")
+with d2:
+    sex = d2.selectbox("Sex", ["Male", "Female"], key="sex")
 
-col1, col2 = st.columns(2)
-sbp = na_number(col1, "Systolic BP (mmHg)", minv=70, maxv=240, key="sbp")
-dbp = na_number(col2, "Diastolic BP (mmHg)", minv=40, maxv=140, key="dbp")
+with d3:
+    eth = d3.selectbox("Ethnicity", ["Indian", "South Asian", "White", "Black", "Other"], key="eth")
 
-# ========== LIPIDS ==========
-st.header("Lipid Profile")
-st.markdown("")
+d5, d6, d7 = st.columns([1, 1, 1])
+with d5:
+    height_val = opt_num(d5, "Height", minv=100, maxv=220, step=1, key="ht")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">cm</span>', unsafe_allow_html=True)
 
-r1c1, r1c2 = st.columns(2)
-tc = na_number(r1c1, "Total Cholesterol (mg/dL)", minv=0, maxv=400, key="tc")
-ldl = na_number(r1c2, "LDL Cholesterol (mg/dL)", minv=0, maxv=300, key="ldl")
+with d6:
+    weight_val = opt_num(d6, "Weight", minv=20, maxv=300, step=1, key="wt")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">kg</span>', unsafe_allow_html=True)
 
-st.markdown("")
+with d7:
+    bmi = bmi_calc(height_val, weight_val)
+    d7.metric("BMI", f"{bmi:.1f} kg/m²" if bmi is not None else "—")
 
-r2c1, r2c2 = st.columns(2)
-hdl = na_number(r2c1, "HDL Cholesterol (mg/dL)", minv=0, maxv=120, key="hdl")
-tg = na_number(r2c2, "Triglycerides (mg/dL)", minv=0, maxv=600, key="tg")
 
-st.markdown("")
+# ==================== VITALS ====================
+sep("Vital Signs")
+
+v1, v2 = st.columns(2)
+with v1:
+    sbp = opt_num(v1, "Systolic BP", minv=60, maxv=260, step=1, key="sbp")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mmHg</span>', unsafe_allow_html=True)
+
+with v2:
+    dbp = opt_num(v2, "Diastolic BP", minv=30, maxv=160, step=1, key="dbp")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mmHg</span>', unsafe_allow_html=True)
+
+
+# ==================== LIPID PROFILE ====================
+sep("Lipid Profile")
+
+lp1, lp2, lp3, lp4 = st.columns(4)
+with lp1:
+    tc = opt_num(lp1, "Total Cholesterol", minv=0, maxv=600, step=1, key="tc")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with lp2:
+    ldl = opt_num(lp2, "LDL-C", minv=0, maxv=400, step=1, key="ldl")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with lp3:
+    hdl = opt_num(lp3, "HDL-C", minv=0, maxv=150, step=1, key="hdl")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with lp4:
+    tg = opt_num(lp4, "Triglycerides", minv=0, maxv=1500, step=1, key="tg")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
 nhdl = non_hdl(tc, hdl)
-st.metric("Non-HDL Cholesterol (mg/dL)", f"{nhdl:.1f}" if nhdl is not None else "NA")
+tc_hdl_ratio = ratio(tc, hdl)
 
-st.markdown("")
-st.markdown("**Advanced Lipid Markers**")
-st.markdown("")
+lm1, lm2, lm3 = st.columns(3)
+lm1.metric("Non-HDL-C", f"{nhdl:.0f} mg/dL" if nhdl is not None else "—")
+lm2.metric("TC / HDL Ratio", f"{tc_hdl_ratio:.2f}" if tc_hdl_ratio is not None else "—")
 
-r3c1, r3c2 = st.columns(2)
-apob = na_number(r3c1, "Apolipoprotein B (mg/dL)", minv=0, maxv=200, key="apob")
-apoa1 = na_number(r3c2, "Apolipoprotein A1 (mg/dL)", minv=0, maxv=250, key="apoa1")
+sep("Advanced Lipid Markers")
+al1, al2, al3 = st.columns(3)
+with al1:
+    apob = opt_num(al1, "ApoB", minv=0, maxv=300, step=1, key="apob")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
 
-st.markdown("")
+with al2:
+    apoa1 = opt_num(al2, "ApoA1", minv=0, maxv=300, step=1, key="apoa1")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with al3:
+    lpa = opt_num(al3, "Lp(a)", minv=0, maxv=500, step=1, key="lpa")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
 apo_ratio = ratio(apob, apoa1)
-st.metric("ApoB/ApoA1 Ratio", f"{apo_ratio:.2f}" if apo_ratio is not None else "NA")
+am1, am2 = st.columns([1, 3])
+am1.metric("ApoB / ApoA1", f"{apo_ratio:.2f}" if apo_ratio is not None else "—")
 
-st.markdown("")
-lpa = na_number(st.container(), "Lipoprotein(a) (mg/dL)", minv=0, maxv=300, key="lpa")
 
-# ========== DIABETES ==========
-st.header("Diabetes Status")
-st.markdown("")
+# ==================== DIABETES & SMOKING ====================
+sep("Metabolic & Lifestyle")
 
-diabetes = st.radio("Diabetes", ["No", "Yes"])
-st.markdown("")
+ms1, ms2, ms3 = st.columns([1, 1, 1])
+with ms1:
+    diabetes = ms1.radio("Diabetes", ["No", "Yes"], key="diabetes", horizontal=True)
 
-if diabetes == "Yes":
-    duration = na_number(st.container(), "Diabetes Duration (years)", minv=0, maxv=50, key="dm_dur")
-    st.markdown("")
-    treatment = st.radio("Current Treatment", ["Oral", "Insulin"])
-else:
-    duration = None
-    treatment = None
+with ms2:
+    smoke = ms2.selectbox("Smoking Status", ["Never", "Former", "Current"], key="smoke")
 
-# ========== SMOKING ==========
-st.header("Smoking History")
-st.markdown("")
+with ms3:
+    if diabetes == "Yes":
+        duration = opt_num(ms3, "DM Duration", minv=0, maxv=70, step=1, key="dm_dur")
+        st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">years</span>', unsafe_allow_html=True)
+        treatment = ms3.radio("Treatment", ["Oral", "Insulin"], key="dm_tx", horizontal=True)
+    else:
+        duration = None
+        treatment = None
 
-smoke = st.selectbox("Smoking Status", ["Never", "Former", "Current"])
 
-# ========== MEDICAL HISTORY ==========
-st.header("Medical History")
-st.markdown("")
+# ==================== MEDICAL HISTORY ====================
+sep("Medical History")
+
+mh1, mh2, mh3 = st.columns(3)
 
 if 'none_hist' not in st.session_state:
     st.session_state.none_hist = False
 
-col1, col2, col3 = st.columns(3)
-
-with col1:
+with mh1:
     mi = st.checkbox("Myocardial Infarction", disabled=st.session_state.none_hist, key="mi")
-    stroke = st.checkbox("Stroke/TIA", disabled=st.session_state.none_hist, key="stroke")
+    stroke = st.checkbox("Stroke / TIA", disabled=st.session_state.none_hist, key="stroke")
     pad = st.checkbox("Peripheral Artery Disease", disabled=st.session_state.none_hist, key="pad")
     revasc = st.checkbox("Revascularization", disabled=st.session_state.none_hist, key="revasc")
 
-with col2:
+with mh2:
     ckd = st.checkbox("Chronic Kidney Disease", disabled=st.session_state.none_hist, key="ckd")
     hf = st.checkbox("Heart Failure", disabled=st.session_state.none_hist, key="hf")
     nafld = st.checkbox("NAFLD", disabled=st.session_state.none_hist, key="nafld")
     mets = st.checkbox("Metabolic Syndrome", disabled=st.session_state.none_hist, key="mets")
 
-with col3:
+with mh3:
     atrial_fib = st.checkbox("Atrial Fibrillation", disabled=st.session_state.none_hist, key="afib")
     rheumatoid_arthritis = st.checkbox("Rheumatoid Arthritis", disabled=st.session_state.none_hist, key="ra")
     migraine = st.checkbox("Migraine", disabled=st.session_state.none_hist, key="migraine")
 
-st.markdown("")
 none_hist_check = st.checkbox("None of the above", key="none_hist_check")
-
 if none_hist_check != st.session_state.none_hist:
     st.session_state.none_hist = none_hist_check
     if none_hist_check:
-        for key in ['mi', 'stroke', 'pad', 'revasc', 'ckd', 'hf', 'nafld', 'mets', 'afib', 'ra', 'migraine']:
-            if key in st.session_state:
-                st.session_state[key] = False
+        for k in ['mi', 'stroke', 'pad', 'revasc', 'ckd', 'hf', 'nafld', 'mets', 'afib', 'ra', 'migraine']:
+            if k in st.session_state:
+                st.session_state[k] = False
     st.rerun()
 
 ascvd = mi or stroke or pad or revasc
 
-# ========== FAMILY HISTORY ==========
-st.header("Family History")
-st.caption("Premature ASCVD = Male <55, Female <65 in first-degree relatives")
-st.markdown("")
+
+# ==================== FAMILY HISTORY ====================
+sep("Family History")
+st.caption("Premature ASCVD: Male <55 yrs · Female <65 yrs in first-degree relatives")
 
 if 'none_fh' not in st.session_state:
     st.session_state.none_fh = False
 
-col1, col2 = st.columns(2)
+fh1, fh2 = st.columns(2)
+with fh1:
+    prem_ascvd = st.checkbox("Premature ASCVD (first-degree relatives)", disabled=st.session_state.none_fh, key="prem_ascvd")
+    fh_dm = st.checkbox("Family Hx of Diabetes", disabled=st.session_state.none_fh, key="fh_dm")
 
-with col1:
-    prem_ascvd = st.checkbox("Premature ASCVD in first-degree relatives", disabled=st.session_state.none_fh, key="prem_ascvd")
-    fh_dm = st.checkbox("Family History of Diabetes", disabled=st.session_state.none_fh, key="fh_dm")
-
-with col2:
-    fh_htn = st.checkbox("Family History of Hypertension", disabled=st.session_state.none_fh, key="fh_htn")
+with fh2:
+    fh_htn = st.checkbox("Family Hx of Hypertension", disabled=st.session_state.none_fh, key="fh_htn")
     fh_fh = st.checkbox("Familial Hypercholesterolemia", disabled=st.session_state.none_fh, key="fh_fh")
 
-st.markdown("")
 none_fh_check = st.checkbox("None of the above", key="none_fh_check")
-
 if none_fh_check != st.session_state.none_fh:
     st.session_state.none_fh = none_fh_check
     if none_fh_check:
-        for key in ['prem_ascvd', 'fh_dm', 'fh_htn', 'fh_fh']:
-            if key in st.session_state:
-                st.session_state[key] = False
+        for k in ['prem_ascvd', 'fh_dm', 'fh_htn', 'fh_fh']:
+            if k in st.session_state:
+                st.session_state[k] = False
     st.rerun()
 
-# ========== MEDICATIONS ==========
-st.header("Current Medications")
-st.markdown("")
+
+# ==================== MEDICATIONS ====================
+sep("Current Medications")
 
 if 'none_med' not in st.session_state:
     st.session_state.none_med = False
 
-col1, col2 = st.columns(2)
-
-with col1:
+med1, med2 = st.columns(2)
+with med1:
     on_statin = st.checkbox("Statin", disabled=st.session_state.none_med, key="on_statin")
     antihtn = st.checkbox("Antihypertensive", disabled=st.session_state.none_med, key="antihtn")
 
-with col2:
+with med2:
     antidm = st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
     antiplate = st.checkbox("Antiplatelet", disabled=st.session_state.none_med, key="antiplate")
 
-st.markdown("")
 none_med_check = st.checkbox("None of the above", key="none_med_check")
-
 if none_med_check != st.session_state.none_med:
     st.session_state.none_med = none_med_check
     if none_med_check:
-        for key in ['on_statin', 'antihtn', 'antidm', 'antiplate']:
-            if key in st.session_state:
-                st.session_state[key] = False
+        for k in ['on_statin', 'antihtn', 'antidm', 'antiplate']:
+            if k in st.session_state:
+                st.session_state[k] = False
     st.rerun()
 
-# ========== CALCULATIONS ==========
-st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-st.header("📊 Calculated Risk Scores")
-st.markdown("")
 
-tc_hdl_ratio = ratio(tc, hdl)
-qrisk = calculate_qrisk3(age, sex, eth, smoke, diabetes, height, weight, sbp, tc_hdl_ratio, antihtn, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, migraine)
-aha = calculate_aha_prevent(age, sex, eth, tc, hdl, sbp, antihtn, diabetes, smoke)
-
-col1, col2 = st.columns(2)
-with col1:
-    if qrisk is not None:
-        st.metric("QRISK3 (10-year CVD risk)", f"{qrisk}%")
-    else:
-        st.info("QRISK3: Not calculable — requires age 25-84 and complete inputs")
-
-with col2:
-    if aha is not None:
-        st.metric("AHA PREVENT (10-year ASCVD risk)", f"{aha}%")
-    else:
-        st.info("AHA PREVENT: Not calculable — requires age 40-79 and complete inputs")
-
+# ==================== CALCULATIONS ====================
+qrisk = calculate_qrisk3(age_val, sex, eth, smoke, diabetes, height_val, weight_val, sbp, tc_hdl_ratio, antihtn, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, migraine)
+aha = calculate_aha_prevent(age_val, sex, eth, tc, hdl, sbp, antihtn, diabetes, smoke)
 qrisk_cat = percent_category(qrisk)
 aha_cat = percent_category(aha)
 
-st.markdown("")
-st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-
-st.subheader("🔗 Official Guidelines & Calculators")
-st.markdown("")
-
-st.markdown("""
-<div class="premium-link-container">
-    <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator" target="_blank" class="premium-link">
-        <div class="premium-link-title">AHA PREVENT</div>
-        <div class="premium-link-subtitle">American Heart Association Calculator</div>
-    </a>
-    <a href="https://qrisk.org/" target="_blank" class="premium-link qrisk">
-        <div class="premium-link-title">QRISK3</div>
-        <div class="premium-link-subtitle">UK Cardiovascular Risk Calculator</div>
-    </a>
-    <a href="https://www.lipidjournal.com/article/S1933-2874(24)00006-0/fulltext" target="_blank" class="premium-link lai">
-        <div class="premium-link-title">LAI 2023</div>
-        <div class="premium-link-subtitle">Lipid Association of India Guidelines</div>
-    </a>
-</div>
-""", unsafe_allow_html=True)
-
-# ========== LAI CALCULATION ==========
 risk_enhancers = (smoke == "Current") or mets or fh_fh or (lpa is not None and lpa > 50) or (apob is not None and apob > 130)
 if ascvd or ckd or (diabetes == "Yes" and duration is not None and duration >= 10):
     lai = "Very High"
@@ -1112,114 +1171,121 @@ elif prem_ascvd or fh_dm or fh_htn:
 else:
     lai = "Low"
 
-# ========== RISK PANEL ==========
-st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-st.header("🎯 Risk Stratification Panel")
-st.markdown("")
+
+# ==================== SCORE METRICS ====================
+st.markdown('<div class="section-divider" style="margin-top:1.8rem;"></div>', unsafe_allow_html=True)
+sep("Calculated 10-Year Risk Scores")
+
+sc1, sc2, sc3 = st.columns(3)
+with sc1:
+    if qrisk is not None:
+        sc1.metric("QRISK3", f"{qrisk}%", help="10-year CVD risk — requires age 25-84")
+    else:
+        st.info("QRISK3: Requires age 25–84 + complete inputs")
+
+with sc2:
+    if aha is not None:
+        sc2.metric("AHA PREVENT", f"{aha}%", help="10-year ASCVD risk — requires age 40-79")
+    else:
+        st.info("AHA PREVENT: Requires age 40–79 + complete inputs")
+
+with sc3:
+    sc3.metric("LAI 2023 Category", lai)
+
+
+# ==================== RISK STRATIFICATION PANEL ====================
+sep("Risk Stratification")
 
 cols = st.columns(3)
 
-# AHA PREVENT card
 with cols[0]:
     if aha_cat:
         cat_class = aha_cat.lower().replace(" ", "")
         st.markdown(
             f'<div class="risk-card risk-{cat_class}">'
-            f'<h3 style="margin:0;color:{TEXT_PRIMARY};">AHA PREVENT</h3>'
-            f'<h1 style="margin:0.5rem 0;color:{TEXT_PRIMARY};">{aha_cat}</h1>'
-            f'<p style="margin:0;font-size:1.2rem;font-weight:600;color:{TEXT_PRIMARY};">{aha}%</p>'
+            f'<div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{TEXT_MUTED};margin-bottom:0.3rem;">AHA PREVENT</div>'
+            f'<div style="font-size:1.7rem;font-weight:800;color:{TEXT_PRIMARY};line-height:1.1;">{aha_cat}</div>'
+            f'<div style="font-size:1rem;font-weight:600;color:{TEXT_SECONDARY};margin-top:0.2rem;">{aha}% · 10-yr ASCVD</div>'
             f'</div>', unsafe_allow_html=True
         )
         if aha_cat != "Low":
-            factors = get_contributing_factors_aha(age, sex, tc, hdl, sbp, antihtn, diabetes, smoke)
+            factors = get_contributing_factors_aha(age_val, sex, tc, hdl, sbp, antihtn, diabetes, smoke)
             if factors:
                 st.markdown(
-                    f'<div class="contributing-factors">'
-                    f'<div class="factor-title">Contributing Factors:</div>' +
+                    f'<div class="contributing-factors"><div class="factor-title">Key Drivers</div>' +
                     "".join(f'<div class="factor-item">{f}</div>' for f in factors[:5]) +
                     '</div>', unsafe_allow_html=True
                 )
     else:
         st.markdown(
             f'<div class="risk-card risk-unavailable">'
-            f'<h3 style="margin:0;color:{TEXT_PRIMARY};">AHA PREVENT</h3>'
-            f'<p style="margin:0.5rem 0;color:{TEXT_SECONDARY};">Not calculable</p>'
+            f'<div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{TEXT_MUTED};margin-bottom:0.3rem;">AHA PREVENT</div>'
+            f'<div style="font-size:1rem;color:{TEXT_MUTED};">Not calculable</div>'
+            f'<div style="font-size:0.78rem;color:{TEXT_MUTED};margin-top:0.2rem;">Requires age 40–79 + lipids + BP</div>'
             f'</div>', unsafe_allow_html=True
         )
 
-# QRISK3 card
 with cols[1]:
     if qrisk_cat:
         cat_class = qrisk_cat.lower().replace(" ", "")
         st.markdown(
             f'<div class="risk-card risk-{cat_class}">'
-            f'<h3 style="margin:0;color:{TEXT_PRIMARY};">QRISK3</h3>'
-            f'<h1 style="margin:0.5rem 0;color:{TEXT_PRIMARY};">{qrisk_cat}</h1>'
-            f'<p style="margin:0;font-size:1.2rem;font-weight:600;color:{TEXT_PRIMARY};">{qrisk}%</p>'
+            f'<div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{TEXT_MUTED};margin-bottom:0.3rem;">QRISK3</div>'
+            f'<div style="font-size:1.7rem;font-weight:800;color:{TEXT_PRIMARY};line-height:1.1;">{qrisk_cat}</div>'
+            f'<div style="font-size:1rem;font-weight:600;color:{TEXT_SECONDARY};margin-top:0.2rem;">{qrisk}% · 10-yr CVD</div>'
             f'</div>', unsafe_allow_html=True
         )
         if qrisk_cat != "Low":
-            factors = get_contributing_factors_qrisk(age, sex, smoke, diabetes, bmi, sbp, tc_hdl_ratio, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, eth)
+            factors = get_contributing_factors_qrisk(age_val, sex, smoke, diabetes, bmi, sbp, tc_hdl_ratio, prem_ascvd, ckd, atrial_fib, rheumatoid_arthritis, eth)
             if factors:
                 st.markdown(
-                    f'<div class="contributing-factors">'
-                    f'<div class="factor-title">Contributing Factors:</div>' +
+                    f'<div class="contributing-factors"><div class="factor-title">Key Drivers</div>' +
                     "".join(f'<div class="factor-item">{f}</div>' for f in factors[:5]) +
                     '</div>', unsafe_allow_html=True
                 )
     else:
         st.markdown(
             f'<div class="risk-card risk-unavailable">'
-            f'<h3 style="margin:0;color:{TEXT_PRIMARY};">QRISK3</h3>'
-            f'<p style="margin:0.5rem 0;color:{TEXT_SECONDARY};">Not calculable</p>'
+            f'<div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{TEXT_MUTED};margin-bottom:0.3rem;">QRISK3</div>'
+            f'<div style="font-size:1rem;color:{TEXT_MUTED};">Not calculable</div>'
+            f'<div style="font-size:0.78rem;color:{TEXT_MUTED};margin-top:0.2rem;">Requires age 25–84 + TC/HDL ratio + BP</div>'
             f'</div>', unsafe_allow_html=True
         )
 
-# LAI card
 with cols[2]:
-    if lai:
-        cat_class = lai.lower().replace(" ", "")
-        st.markdown(
-            f'<div class="risk-card risk-{cat_class}">'
-            f'<h3 style="margin:0;color:{TEXT_PRIMARY};">LAI Risk</h3>'
-            f'<h1 style="margin:0.5rem 0;color:{TEXT_PRIMARY};">{lai}</h1>'
-            f'<p style="margin:0;font-size:0.9rem;font-style:italic;color:{TEXT_SECONDARY};">Lipid Association of India</p>'
-            f'</div>', unsafe_allow_html=True
-        )
-        if lai != "Low":
-            factors = get_contributing_factors_lai(ascvd, ckd, diabetes, duration, smoke, mets, fh_fh, lpa, apob, prem_ascvd, fh_dm, fh_htn, ldl)
-            if factors:
-                st.markdown(
-                    f'<div class="contributing-factors">'
-                    f'<div class="factor-title">Contributing Factors:</div>' +
-                    "".join(f'<div class="factor-item">{f}</div>' for f in factors[:5]) +
-                    '</div>', unsafe_allow_html=True
-                )
-    else:
-        st.markdown(
-            f'<div class="risk-card risk-unavailable">'
-            f'<h3 style="margin:0;color:{TEXT_PRIMARY};">LAI Risk</h3>'
-            f'<p style="margin:0.5rem 0;color:{TEXT_SECONDARY};">Unavailable</p>'
-            f'</div>', unsafe_allow_html=True
-        )
+    cat_class = lai.lower().replace(" ", "")
+    st.markdown(
+        f'<div class="risk-card risk-{cat_class}">'
+        f'<div style="font-size:0.72rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:{TEXT_MUTED};margin-bottom:0.3rem;">LAI 2023</div>'
+        f'<div style="font-size:1.7rem;font-weight:800;color:{TEXT_PRIMARY};line-height:1.1;">{lai}</div>'
+        f'<div style="font-size:0.82rem;color:{TEXT_SECONDARY};margin-top:0.2rem;font-style:italic;">Lipid Association of India</div>'
+        f'</div>', unsafe_allow_html=True
+    )
+    if lai != "Low":
+        factors = get_contributing_factors_lai(ascvd, ckd, diabetes, duration, smoke, mets, fh_fh, lpa, apob, prem_ascvd, fh_dm, fh_htn, ldl)
+        if factors:
+            st.markdown(
+                f'<div class="contributing-factors"><div class="factor-title">Key Drivers</div>' +
+                "".join(f'<div class="factor-item">{f}</div>' for f in factors[:5]) +
+                '</div>', unsafe_allow_html=True
+            )
 
-# ========== TREATMENT RECOMMENDATIONS ==========
-st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-st.header("📋 Treatment Recommendations by Guidelines")
-st.markdown("")
+
+# ==================== TREATMENT RECOMMENDATIONS ====================
+sep("Treatment Recommendations by Guideline")
 
 tab1, tab2, tab3 = st.tabs(["AHA PREVENT", "QRISK3", "LAI 2023"])
 
 with tab1:
     if aha_cat:
         recs = get_aha_recommendations(aha_cat, aha)
-        st.subheader(f"AHA PREVENT Recommendations ({aha_cat} Risk)")
-        col1, col2 = st.columns(2)
-        with col1:
+        st.markdown(f"**{aha_cat} Risk** — AHA PREVENT")
+        c1, c2 = st.columns(2)
+        with c1:
             st.markdown(f"**Statin Therapy:** {recs['statin']}")
             st.markdown(f"**LDL-C Target:** {recs['ldl_target']}")
             st.markdown(f"**Non-HDL-C Target:** {recs['non_hdl_target']}")
-        with col2:
+        with c2:
             st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
             st.markdown(f"**Monitoring:** {recs['monitoring']}")
     else:
@@ -1228,13 +1294,13 @@ with tab1:
 with tab2:
     if qrisk_cat:
         recs = get_qrisk_recommendations(qrisk_cat, qrisk)
-        st.subheader(f"QRISK3 Recommendations ({qrisk_cat} Risk)")
-        col1, col2 = st.columns(2)
-        with col1:
+        st.markdown(f"**{qrisk_cat} Risk** — QRISK3")
+        c1, c2 = st.columns(2)
+        with c1:
             st.markdown(f"**Statin Therapy:** {recs['statin']}")
             st.markdown(f"**LDL-C Target:** {recs['ldl_target']}")
             st.markdown(f"**Non-HDL-C Target:** {recs['non_hdl_target']}")
-        with col2:
+        with c2:
             st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
             st.markdown(f"**Monitoring:** {recs['monitoring']}")
     else:
@@ -1242,29 +1308,44 @@ with tab2:
 
 with tab3:
     recs = get_lai_recommendations(lai)
-    st.subheader(f"LAI 2023 Recommendations ({lai} Risk)")
-    col1, col2 = st.columns(2)
-    with col1:
+    st.markdown(f"**{lai} Risk** — LAI 2023")
+    c1, c2 = st.columns(2)
+    with c1:
         st.markdown(f"**Statin Therapy:** {recs['statin']}")
         st.markdown(f"**LDL-C Target:** {recs['ldl_target']}")
         st.markdown(f"**Non-HDL-C Target:** {recs['non_hdl_target']}")
         st.markdown(f"**ApoB Target:** {recs['apob_target']}")
-    with col2:
+    with c2:
         st.markdown(f"**Lifestyle:** {recs['lifestyle']}")
         st.markdown(f"**Monitoring:** {recs['monitoring']}")
 
-# ========== UNIFIED RECOMMENDATION ==========
-st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-st.header("🤖 Unified Clinical Recommendation")
-st.markdown("")
 
-with st.spinner("Generating comprehensive treatment recommendation..."):
-    unified_summary = generate_fallback_summary(aha_cat, qrisk_cat, lai)
-    st.markdown(unified_summary)
+# ==================== UNIFIED RECOMMENDATION ====================
+sep("Unified Clinical Recommendation")
 
-st.markdown("")
-st.info("💡 **Note:** This unified recommendation synthesizes all three risk assessment tools and provides evidence-based guidance. Please use clinical judgment and consider individual patient factors.")
+unified_summary = generate_fallback_summary(aha_cat, qrisk_cat, lai)
+st.markdown(unified_summary)
 
-st.markdown("")
-st.markdown('<hr class="section-divider">', unsafe_allow_html=True)
-st.caption("*This tool is intended for clinical decision support based on AHA, QRISK3, and LAI 2023 Guidelines. All treatment decisions should be made through shared decision-making with the patient.*")
+st.info("This recommendation synthesizes AHA PREVENT, QRISK3, and LAI 2023 guidelines. All decisions should involve shared decision-making with the patient.")
+
+st.markdown('<div class="section-divider" style="margin-top:2rem;"></div>', unsafe_allow_html=True)
+
+# ==================== REFERENCE LINKS ====================
+st.markdown("""
+<div class="premium-link-container">
+    <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator" target="_blank" class="premium-link">
+        <div class="premium-link-title">AHA PREVENT</div>
+        <div class="premium-link-subtitle">American Heart Association</div>
+    </a>
+    <a href="https://qrisk.org/" target="_blank" class="premium-link qrisk">
+        <div class="premium-link-title">QRISK3</div>
+        <div class="premium-link-subtitle">UK CVD Risk Calculator</div>
+    </a>
+    <a href="https://www.lipidjournal.com/article/S1933-2874(24)00006-0/fulltext" target="_blank" class="premium-link lai">
+        <div class="premium-link-title">LAI 2023</div>
+        <div class="premium-link-subtitle">Lipid Association of India</div>
+    </a>
+</div>
+""", unsafe_allow_html=True)
+
+st.caption("Clinical decision support tool — AHA · QRISK3 · LAI 2023 Guidelines. All treatment decisions require clinical judgment and shared decision-making.")
