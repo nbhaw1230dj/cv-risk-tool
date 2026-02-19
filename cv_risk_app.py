@@ -76,6 +76,13 @@ if is_dark:
     TOOLBAR_BTN_BORDER= "#4c9ef8"
     TOOLBAR_BTN_COLOR = "#e8eaf0"
     SECTION_LABEL_COLOR = "#4c9ef8"
+    # Dark mode button specifics
+    RESET_BTN_BG      = "#2a2f45"
+    RESET_BTN_COLOR   = "#e8eaf0"
+    RESET_BTN_BORDER  = "#6b7a9e"
+    THEME_BTN_BG      = "#4c9ef8"
+    THEME_BTN_COLOR   = "#ffffff"
+    THEME_BTN_BORDER  = "#4c9ef8"
 else:
     BG_PAGE        = "#f0f2f6"
     BG_SECONDARY   = "#ffffff"
@@ -129,6 +136,13 @@ else:
     TOOLBAR_BTN_BORDER= "#dde1e9"
     TOOLBAR_BTN_COLOR = "#475569"
     SECTION_LABEL_COLOR = "#2563eb"
+    # Light mode button specifics
+    RESET_BTN_BG      = "#ffffff"
+    RESET_BTN_COLOR   = "#374151"
+    RESET_BTN_BORDER  = "#d1d5db"
+    THEME_BTN_BG      = "#2563eb"
+    THEME_BTN_COLOR   = "#ffffff"
+    THEME_BTN_BORDER  = "#2563eb"
 
 # ========== INJECT CSS ==========
 st.markdown(f"""
@@ -147,10 +161,10 @@ st.markdown(f"""
         color: {TEXT_PRIMARY} !important;
     }}
 
-    /* ---- Block container ---- */
+    /* ---- Block container: add top padding so title never clips ---- */
     .block-container {{
         background-color: {BG_PAGE} !important;
-        padding-top: 1.5rem !important;
+        padding-top: 2.5rem !important;
         padding-bottom: 3rem !important;
         max-width: 1200px !important;
     }}
@@ -160,78 +174,13 @@ st.markdown(f"""
         color: {TEXT_PRIMARY} !important;
     }}
 
-    /* ---- TOOLBAR ---- */
-    .cv-toolbar {{
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        background-color: {TOOLBAR_BG};
-        border-bottom: 1px solid {TOOLBAR_BORDER};
-        padding: 0.55rem 1.2rem;
-        margin: 0 -1rem 1.5rem -1rem;
-        position: sticky;
-        top: 0;
-        z-index: 999;
-        box-shadow: 0 1px 6px rgba(0,0,0,0.07);
-    }}
-    .cv-toolbar-title {{
-        font-size: 0.95rem;
-        font-weight: 700;
-        letter-spacing: 0.02em;
-        color: {HEADING_COLOR} !important;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }}
-    .cv-toolbar-title .cv-dot {{
-        width: 8px; height: 8px;
-        border-radius: 50%;
-        background: #ef4444;
-        display: inline-block;
-        box-shadow: 0 0 6px rgba(239,68,68,0.5);
-    }}
-    .cv-toolbar-actions {{
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }}
-    .cv-toolbar-btn {{
-        display: inline-flex;
-        align-items: center;
-        gap: 0.35rem;
-        background: {TOOLBAR_BTN_BG};
-        color: {TOOLBAR_BTN_COLOR} !important;
-        border: 1px solid {TOOLBAR_BTN_BORDER};
-        border-radius: 6px;
-        padding: 0.3rem 0.75rem;
-        font-size: 0.78rem;
-        font-weight: 500;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background 0.15s, border-color 0.15s;
-        white-space: nowrap;
-    }}
-    .cv-toolbar-btn:hover {{
-        border-color: {ACCENT};
-        background: {BG_PAGE};
-    }}
-    .cv-toolbar-btn.accent {{
-        background: {ACCENT};
-        color: #ffffff !important;
-        border-color: {ACCENT};
-    }}
-    .cv-toolbar-btn.accent:hover {{
-        background: {ACCENT_DARK};
-    }}
-
     /* ---- Section headers (h2) ---- */
     h2 {{
-        color: {TEXT_PRIMARY} !important;
+        color: {SECTION_LABEL_COLOR} !important;
         font-size: 0.8rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.08em !important;
-        color: {SECTION_LABEL_COLOR} !important;
         margin-top: 1.6rem !important;
         margin-bottom: 0.6rem !important;
         padding: 0 !important;
@@ -287,12 +236,10 @@ st.markdown(f"""
         box-shadow: 0 0 0 3px {ACCENT}22 !important;
         outline: none !important;
     }}
-    /* Hide stepper buttons */
     .stNumberInput [data-testid="stNumberInputStepUp"],
     .stNumberInput [data-testid="stNumberInputStepDown"] {{
         display: none !important;
     }}
-    /* Tighten number input wrapper */
     .stNumberInput > div {{
         gap: 0 !important;
     }}
@@ -409,7 +356,7 @@ st.markdown(f"""
         border-left: 4px solid {WARN_BORDER} !important;
     }}
 
-    /* ---- Streamlit default buttons ---- */
+    /* ---- Default Streamlit buttons (fallback) ---- */
     .stButton > button {{
         background-color: {BTN_BG} !important;
         color: #ffffff !important;
@@ -425,6 +372,44 @@ st.markdown(f"""
         background-color: {BTN_HOVER} !important;
         transform: none !important;
         box-shadow: none !important;
+    }}
+
+    /* ---- Reset button override ---- */
+    .cv-reset-btn .stButton > button {{
+        background-color: {RESET_BTN_BG} !important;
+        color: {RESET_BTN_COLOR} !important;
+        border: 1.5px solid {RESET_BTN_BORDER} !important;
+        border-radius: 7px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        padding: 0.4rem 1rem !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        transition: all 0.15s !important;
+    }}
+    .cv-reset-btn .stButton > button:hover {{
+        border-color: {ACCENT} !important;
+        color: {ACCENT} !important;
+        background-color: {RESET_BTN_BG} !important;
+    }}
+
+    /* ---- Theme toggle button override ---- */
+    .cv-theme-btn .stButton > button {{
+        background-color: {THEME_BTN_BG} !important;
+        color: {THEME_BTN_COLOR} !important;
+        border: 1.5px solid {THEME_BTN_BORDER} !important;
+        border-radius: 7px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        padding: 0.4rem 1rem !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        transition: all 0.15s !important;
+    }}
+    .cv-theme-btn .stButton > button:hover {{
+        background-color: {ACCENT_DARK} !important;
+        border-color: {ACCENT_DARK} !important;
+        color: #ffffff !important;
     }}
 
     /* ---- Markdown ---- */
@@ -543,6 +528,28 @@ st.markdown(f"""
         flex: 1; height: 1px; background: {BORDER_COLOR};
     }}
 
+    /* ---- Reference link pills ---- */
+    .cv-ref-pill {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border-radius: 7px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.38rem 0.9rem;
+        white-space: nowrap;
+        text-decoration: none !important;
+        background: {TOOLBAR_BTN_BG};
+        color: {TOOLBAR_BTN_COLOR} !important;
+        border: 1.5px solid {TOOLBAR_BTN_BORDER};
+        transition: border-color 0.15s, color 0.15s;
+        margin-right: 0.4rem;
+    }}
+    .cv-ref-pill:hover {{
+        border-color: {ACCENT};
+        color: {ACCENT} !important;
+    }}
+
     /* ---- Disabled checkbox ---- */
     .stCheckbox input:disabled + span {{ color: {TEXT_MUTED} !important; opacity: 0.6 !important; }}
 
@@ -565,6 +572,18 @@ st.markdown(f"""
         background-color: {BG_INPUT} !important;
         color: {INPUT_COLOR} !important;
     }}
+
+    /* ---- Remove gap between header rows ---- */
+    .header-spacer {{
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }}
+
+    /* ---- Align columns vertically in header ---- */
+    .header-col-align [data-testid="column"] {{
+        display: flex;
+        align-items: center;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -572,7 +591,6 @@ st.markdown(f"""
 # ========== HELPER FUNCTIONS ==========
 
 def opt_num(container, label, minv=0.0, maxv=9999.0, step=1.0, key=None, fmt="%.0f"):
-    """Numeric input that returns None when left empty (value=None)."""
     minv = float(minv)
     maxv = float(maxv)
     step = float(step)
@@ -903,137 +921,75 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
 # ==================== HEADER ====================
 THEME_LABEL = "Light Mode" if is_dark else "Dark Mode"
 
-st.markdown(f"""
-<style>
-  .cv-header {{
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.5rem;
-    flex-wrap: wrap;
-  }}
-  .cv-header-title {{
-    flex: 1 1 280px;
-  }}
-  .cv-header-title h1 {{
-    margin: 0 0 0 0 !important;
-    padding: 0 0 0.55rem 0 !important;
-    font-size: clamp(1.45rem, 3.5vw, 2rem) !important;
-    font-weight: 800 !important;
-    color: {HEADING_COLOR} !important;
-    border-bottom: 3px solid {ACCENT} !important;
-    line-height: 1.25 !important;
-    white-space: normal !important;
-    word-break: break-word !important;
-    background: none !important;
-    letter-spacing: -0.01em;
-  }}
-  .cv-ref-row {{
-    display: flex;
-    gap: 0.4rem;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    padding-top: 0.15rem;
-  }}
-  .cv-pill-ref {{
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    border-radius: 7px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 0.38rem 0.9rem;
-    white-space: nowrap;
-    text-decoration: none !important;
-    background: {TOOLBAR_BTN_BG};
-    color: {TOOLBAR_BTN_COLOR} !important;
-    border: 1.5px solid {TOOLBAR_BTN_BORDER};
-    transition: border-color 0.15s, color 0.15s;
-  }}
-  .cv-pill-ref:hover {{
-    border-color: {ACCENT};
-    color: {ACCENT} !important;
-  }}
-  @media (max-width: 520px) {{
-    .cv-header {{ flex-direction: column; gap: 0.7rem; }}
-    .cv-ref-row {{ justify-content: flex-start; }}
-    .cv-header-title h1 {{ font-size: 1.45rem !important; }}
-  }}
-</style>
+# Top spacer to prevent title clip
+st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
 
-<div class="cv-header">
-  <div class="cv-header-title">
-    <h1>🫀 Cardiovascular Risk Assessment Tool</h1>
-  </div>
-  <div class="cv-ref-row">
-    <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
-       target="_blank" class="cv-pill-ref">↗ AHA PREVENT</a>
-    <a href="https://qrisk.org/" target="_blank" class="cv-pill-ref">↗ QRISK3</a>
-  </div>
-</div>
-""", unsafe_allow_html=True)
+# Row 1: Title (left) + Reference links (right)
+hcol_title, hcol_refs = st.columns([3, 1])
 
-# ---- Real functional buttons ----
-st.markdown(f"""
-<style>
-  .header-btn-reset .stButton > button {{
-    border-radius: 7px !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
-    padding: 0.38rem 0.6rem !important;
-    width: 100% !important;
-    box-shadow: none !important;
-    background: transparent !important;
-    color: {TEXT_PRIMARY} !important;
-    border: 1.5px solid {BORDER_COLOR} !important;
-    margin-top: 0 !important;
-  }}
-  .header-btn-reset .stButton > button:hover {{
-    border-color: {ACCENT} !important;
-    color: {ACCENT} !important;
-    background: transparent !important;
-  }}
-  .header-btn-theme .stButton > button {{
-    border-radius: 7px !important;
-    font-size: 0.8rem !important;
-    font-weight: 600 !important;
-    padding: 0.38rem 0.6rem !important;
-    width: 100% !important;
-    box-shadow: none !important;
-    background: {ACCENT} !important;
-    color: #ffffff !important;
-    border: 1.5px solid {ACCENT} !important;
-    margin-top: 0 !important;
-  }}
-  .header-btn-theme .stButton > button:hover {{
-    background: {ACCENT_DARK} !important;
-    border-color: {ACCENT_DARK} !important;
-  }}
-</style>
-""", unsafe_allow_html=True)
+with hcol_title:
+    st.markdown(f"""
+    <div style="
+        padding: 0.2rem 0 0.4rem 0;
+        margin: 0;
+    ">
+        <div style="
+            font-size: clamp(1.3rem, 3vw, 1.9rem);
+            font-weight: 800;
+            color: {HEADING_COLOR};
+            line-height: 1.25;
+            letter-spacing: -0.01em;
+            word-break: break-word;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid {ACCENT};
+            margin-bottom: 0;
+        ">🫀 Cardiovascular Risk Assessment Tool</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-_sp1, _rc, _tc, _sp2 = st.columns([6, 1.1, 1.2, 0.1])
+with hcol_refs:
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+        height: 100%;
+        padding-bottom: 0.5rem;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    ">
+        <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
+           target="_blank" class="cv-ref-pill">↗ AHA PREVENT</a>
+        <a href="https://qrisk.org/" target="_blank" class="cv-ref-pill" style="margin-right:0;">↗ QRISK3</a>
+    </div>
+    """, unsafe_allow_html=True)
 
-with _rc:
-    st.markdown('<div class="header-btn-reset">', unsafe_allow_html=True)
+# Row 2: spacer (left) + Reset + Mode buttons (right)
+st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
+
+_, btn_spacer, btn_reset_col, btn_theme_col = st.columns([3, 0.6, 0.7, 0.7])
+
+with btn_reset_col:
+    st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
     if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
         reset_all()
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-with _tc:
-    st.markdown('<div class="header-btn-theme">', unsafe_allow_html=True)
-    st.button(f"{TOGGLE_ICON} Mode", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
+with btn_theme_col:
+    st.markdown('<div class="cv-theme-btn">', unsafe_allow_html=True)
+    st.button(f"{TOGGLE_ICON} {THEME_LABEL}", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="section-divider" style="margin-top:0.4rem;margin-bottom:0.6rem;"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-divider" style="margin-top:0.6rem;margin-bottom:0.4rem;"></div>', unsafe_allow_html=True)
 
 
-# ==================== DEMOGRAPHICS ====================
+# ==================== SECTION SEPARATOR ====================
 def sep(label):
     st.markdown(f'<div class="section-sep"><span class="section-sep-label">{label}</span><div class="section-sep-line"></div></div>', unsafe_allow_html=True)
 
+
+# ==================== DEMOGRAPHICS ====================
 sep("Patient Demographics")
 
 d1, d2, d3, d4 = st.columns([1, 1, 1, 1])
