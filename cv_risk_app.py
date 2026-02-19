@@ -147,118 +147,443 @@ else:
 # ========== INJECT CSS ==========
 st.markdown(f"""
 <style>
+    /* ---- Hide Streamlit chrome ---- */
+    button[kind="header"], [data-testid="stToolbar"],
+    #MainMenu, .stDeployButton, footer {{
+        display: none !important;
+    }}
 
-/* Remove Streamlit top chrome completely */
-header, footer, #MainMenu, .stDeployButton,
-[data-testid="stToolbar"] {{
-    display: none !important;
-}}
+    /* ---- Global page background ---- */
+    html, body, .stApp, .main,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewBlockContainer"] {{
+        background-color: {BG_PAGE} !important;
+        color: {TEXT_PRIMARY} !important;
+    }}
 
-html, body, .stApp {{
-    background-color: {BG_PAGE} !important;
-}}
+    /* ---- Block container: add top padding so title never clips ---- */
+    .block-container {{
+        background-color: {BG_PAGE} !important;
+        padding-top: 2.5rem !important;
+        padding-bottom: 3rem !important;
+        max-width: 1200px !important;
+    }}
 
-[data-testid="stAppViewContainer"] {{
-    background-color: {BG_PAGE} !important;
-}}
+    /* ---- Universal text color ---- */
+    .stApp *, p, span, div, label, li {{
+        color: {TEXT_PRIMARY} !important;
+    }}
 
-.block-container {{
-    padding-top: 3.5rem !important;
-    padding-bottom: 3rem !important;
-    max-width: 1200px !important;
-}}
+    /* ---- Section headers (h2) ---- */
+    h2 {{
+        color: {SECTION_LABEL_COLOR} !important;
+        font-size: 0.8rem !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.08em !important;
+        margin-top: 1.6rem !important;
+        margin-bottom: 0.6rem !important;
+        padding: 0 !important;
+        border: none !important;
+        background: none !important;
+    }}
 
-/* Title */
-.main-title {{
-    font-size: clamp(1.9rem, 3.2vw, 2.5rem);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    color: {TEXT_PRIMARY};
-    border-bottom: 3px solid {ACCENT};
-    padding-bottom: 0.6rem;
-    margin-bottom: 1.4rem;
-}}
+    /* ---- h3 ---- */
+    h3 {{
+        color: {TEXT_PRIMARY} !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        margin-top: 0 !important;
+    }}
 
-/* Section labels */
-.section-sep-label {{
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: {ACCENT};
-}}
+    /* ---- Section card wrapper ---- */
+    .cv-section {{
+        background: {BG_SECONDARY};
+        border: 1px solid {BORDER_COLOR};
+        border-radius: 10px;
+        padding: 1rem 1.2rem 0.8rem 1.2rem;
+        margin-bottom: 0.8rem;
+    }}
 
-.section-sep-line {{
-    height: 1px;
-    background: {BORDER_COLOR};
-    flex: 1;
-}}
+    /* ---- Input field rows with unit label ---- */
+    .input-row {{
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }}
+    .input-unit {{
+        font-size: 0.78rem;
+        color: {UNIT_COLOR} !important;
+        white-space: nowrap;
+        padding-top: 1.6rem;
+        min-width: 42px;
+    }}
 
-.section-sep {{
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin: 2rem 0 0.9rem 0;
-}}
+    /* ---- Number inputs ---- */
+    .stNumberInput input,
+    input[type="number"],
+    input[type="text"] {{
+        background-color: {BG_INPUT} !important;
+        color: {INPUT_COLOR} !important;
+        border: 1.5px solid {BORDER_COLOR} !important;
+        border-radius: 6px !important;
+        caret-color: {INPUT_COLOR} !important;
+        font-size: 0.9rem !important;
+    }}
+    .stNumberInput input:focus {{
+        border-color: {ACCENT} !important;
+        box-shadow: 0 0 0 3px {ACCENT}22 !important;
+        outline: none !important;
+    }}
+    .stNumberInput [data-testid="stNumberInputStepUp"],
+    .stNumberInput [data-testid="stNumberInputStepDown"] {{
+        display: none !important;
+    }}
+    .stNumberInput > div {{
+        gap: 0 !important;
+    }}
 
-/* Buttons */
-.stButton > button {{
-    border-radius: 8px !important;
-    font-weight: 600 !important;
-    font-size: 0.9rem !important;
-    padding: 0.5rem 1.2rem !important;
-}}
+    /* ---- Selectbox / Dropdown ---- */
+    .stSelectbox [data-baseweb="select"] > div,
+    .stSelectbox [data-baseweb="select"] > div > div {{
+        background-color: {BG_INPUT} !important;
+        color: {SELECTBOX_COLOR} !important;
+        border: 1.5px solid {BORDER_COLOR} !important;
+        border-radius: 6px !important;
+    }}
+    .stSelectbox [data-baseweb="select"] span,
+    .stSelectbox [data-baseweb="select"] div {{
+        color: {SELECTBOX_COLOR} !important;
+        background-color: transparent !important;
+    }}
+    [data-baseweb="popover"], [data-baseweb="menu"],
+    [role="listbox"], [data-baseweb="list"] {{
+        background-color: {BG_INPUT} !important;
+        border-color: {BORDER_COLOR} !important;
+    }}
+    [role="option"], [data-baseweb="option"] {{
+        background-color: {BG_INPUT} !important;
+        color: {SELECTBOX_COLOR} !important;
+    }}
+    [role="option"]:hover, [data-baseweb="option"]:hover {{
+        background-color: {BORDER_COLOR} !important;
+    }}
 
-.cv-reset-btn .stButton > button {{
-    background-color: {RESET_BTN_BG} !important;
-    color: {RESET_BTN_COLOR} !important;
-    border: 1.5px solid {RESET_BTN_BORDER} !important;
-}}
+    /* ---- Radio buttons ---- */
+    .stRadio label, .stRadio div,
+    .stRadio [data-testid="stMarkdownContainer"] p {{
+        color: {TEXT_PRIMARY} !important;
+    }}
+    .stRadio > div {{
+        gap: 0.5rem !important;
+    }}
 
-.cv-theme-btn .stButton > button {{
-    background-color: {THEME_BTN_BG} !important;
-    color: {THEME_BTN_COLOR} !important;
-    border: 1.5px solid {THEME_BTN_BORDER} !important;
-}}
+    /* ---- Checkboxes ---- */
+    .stCheckbox label, .stCheckbox span, .stCheckbox p {{
+        color: {TEXT_PRIMARY} !important;
+        font-weight: 400 !important;
+        font-size: 0.88rem !important;
+    }}
+    .stCheckbox {{
+        margin-bottom: 0.25rem !important;
+        padding: 0 !important;
+    }}
 
-input, select, textarea {{
-    background-color: {BG_INPUT} !important;
-    color: {TEXT_PRIMARY} !important;
-    border: 1.5px solid {BORDER_COLOR} !important;
-    border-radius: 6px !important;
-}}
+    /* ---- Widget labels ---- */
+    .stSelectbox label, .stNumberInput label,
+    .stTextInput label, .stRadio label,
+    [data-testid="stWidgetLabel"] {{
+        color: {TEXT_SECONDARY} !important;
+        font-weight: 500 !important;
+        font-size: 0.82rem !important;
+        margin-bottom: 0.15rem !important;
+    }}
 
-[data-testid="stMetric"] {{
-    background: {BG_SECONDARY};
-    border: 1px solid {BORDER_COLOR};
-    border-radius: 10px;
-    padding: 1rem;
-}}
+    /* ---- Tabs ---- */
+    .stTabs [data-baseweb="tab-list"] {{
+        background-color: {BG_PAGE} !important;
+        gap: 0.25rem !important;
+        border-bottom: 2px solid {BORDER_COLOR} !important;
+    }}
+    .stTabs [data-baseweb="tab"] {{
+        color: {TAB_COLOR} !important;
+        background-color: transparent !important;
+        border-radius: 6px 6px 0 0 !important;
+        padding: 0.55rem 1.2rem !important;
+        font-weight: 500 !important;
+        font-size: 0.85rem !important;
+    }}
+    .stTabs [aria-selected="true"] {{
+        color: {TAB_ACTIVE_COLOR} !important;
+        background-color: {TAB_ACTIVE_BG} !important;
+        border-bottom: 2px solid {TAB_ACTIVE_BORDER} !important;
+    }}
+    .stTabs [data-baseweb="tab-panel"] {{
+        background-color: {BG_SECONDARY} !important;
+        padding: 1.2rem !important;
+        border-radius: 0 0 8px 8px !important;
+        border: 1px solid {BORDER_COLOR} !important;
+        border-top: none !important;
+    }}
 
-[data-testid="stMetricValue"] {{
-    font-size: 1.6rem !important;
-    font-weight: 800 !important;
-}}
+    /* ---- Metric widget ---- */
+    [data-testid="stMetric"] {{
+        background-color: {METRIC_BG} !important;
+        padding: 0.9rem 1rem !important;
+        border-radius: 8px !important;
+        border: 1px solid {BORDER_COLOR} !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
+    }}
+    [data-testid="stMetricLabel"] {{
+        color: {TEXT_SECONDARY} !important;
+        font-size: 0.78rem !important;
+    }}
+    [data-testid="stMetricValue"] {{
+        color: {METRIC_VAL} !important;
+        font-weight: 700 !important;
+        font-size: 1.5rem !important;
+    }}
 
-.cv-ref-pill {{
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    background: {BG_SECONDARY};
-    color: {TEXT_SECONDARY} !important;
-    border: 1.5px solid {BORDER_COLOR};
-    text-decoration: none !important;
-}}
+    /* ---- Alert boxes ---- */
+    [data-testid="stAlert"] {{ border-radius: 6px !important; }}
+    div[data-testid="stAlert"][kind="info"] {{
+        background-color: {INFO_BG} !important;
+        border-left: 4px solid {INFO_BORDER} !important;
+    }}
+    div[data-testid="stAlert"][kind="warning"] {{
+        background-color: {WARN_BG} !important;
+        border-left: 4px solid {WARN_BORDER} !important;
+    }}
 
-.cv-ref-pill:hover {{
-    border-color: {ACCENT};
-    color: {ACCENT} !important;
-}}
+    /* ---- Default Streamlit buttons (fallback) ---- */
+    .stButton > button {{
+        background-color: {BTN_BG} !important;
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        border-radius: 6px !important;
+        border: none !important;
+        padding: 0.45rem 1.2rem !important;
+        font-size: 0.85rem !important;
+        transition: background 0.2s !important;
+        box-shadow: none !important;
+    }}
+    .stButton > button:hover {{
+        background-color: {BTN_HOVER} !important;
+        transform: none !important;
+        box-shadow: none !important;
+    }}
 
+    /* ---- Reset button override ---- */
+    .cv-reset-btn .stButton > button {{
+        background-color: {RESET_BTN_BG} !important;
+        color: {RESET_BTN_COLOR} !important;
+        border: 1.5px solid {RESET_BTN_BORDER} !important;
+        border-radius: 7px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        padding: 0.4rem 1rem !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        transition: all 0.15s !important;
+    }}
+    .cv-reset-btn .stButton > button:hover {{
+        border-color: {ACCENT} !important;
+        color: {ACCENT} !important;
+        background-color: {RESET_BTN_BG} !important;
+    }}
+
+    /* ---- Theme toggle button override ---- */
+    .cv-theme-btn .stButton > button {{
+        background-color: {THEME_BTN_BG} !important;
+        color: {THEME_BTN_COLOR} !important;
+        border: 1.5px solid {THEME_BTN_BORDER} !important;
+        border-radius: 7px !important;
+        font-size: 0.82rem !important;
+        font-weight: 600 !important;
+        padding: 0.4rem 1rem !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        transition: all 0.15s !important;
+    }}
+    .cv-theme-btn .stButton > button:hover {{
+        background-color: {ACCENT_DARK} !important;
+        border-color: {ACCENT_DARK} !important;
+        color: #ffffff !important;
+    }}
+
+    /* ---- Markdown ---- */
+    .stMarkdown, .stMarkdown p, .stMarkdown span,
+    [data-testid="stMarkdownContainer"],
+    [data-testid="stMarkdownContainer"] p,
+    [data-testid="stMarkdownContainer"] li {{
+        color: {TEXT_PRIMARY} !important;
+    }}
+
+    /* ---- Caption ---- */
+    .stCaption, [data-testid="stCaptionContainer"] {{
+        color: {CAPTION_COLOR} !important;
+        font-size: 0.78rem !important;
+    }}
+
+    /* ---- HR ---- */
+    hr {{
+        border: none !important;
+        border-top: 1px solid {DIVIDER} !important;
+        margin: 1rem 0 !important;
+    }}
+
+    /* ---- Risk cards ---- */
+    .risk-card {{
+        border-radius: 10px;
+        padding: 1.2rem 1.4rem;
+        margin: 0;
+        border: 1px solid {BORDER_COLOR};
+        transition: transform 0.15s, box-shadow 0.15s;
+    }}
+    .risk-card:hover {{
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }}
+    .risk-card h3, .risk-card h1, .risk-card p {{ color: {TEXT_PRIMARY} !important; }}
+    .risk-low       {{ background: {RISK_LOW_BG};  border-left: 4px solid {RISK_LOW_BORDER}; }}
+    .risk-moderate  {{ background: {RISK_MOD_BG};  border-left: 4px solid {RISK_MOD_BORDER}; }}
+    .risk-high      {{ background: {RISK_HIGH_BG}; border-left: 4px solid {RISK_HIGH_BORDER}; }}
+    .risk-veryhigh  {{ background: {RISK_VH_BG};   border-left: 4px solid {RISK_VH_BORDER}; }}
+    .risk-unavailable {{ background: {RISK_NA_BG}; border-left: 4px solid {RISK_NA_BORDER}; }}
+
+    /* ---- Contributing factors ---- */
+    .contributing-factors {{
+        background-color: {CF_BG};
+        border-radius: 6px;
+        padding: 0.75rem 0.9rem;
+        margin-top: 0.8rem;
+        font-size: 0.82rem;
+        border: 1px solid {CF_BORDER};
+    }}
+    .factor-title {{
+        font-weight: 600;
+        color: {CF_TITLE} !important;
+        margin-bottom: 0.4rem;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }}
+    .factor-item {{
+        color: {CF_ITEM} !important;
+        padding: 0.2rem 0 0.2rem 1rem;
+        position: relative;
+        line-height: 1.45;
+    }}
+    .factor-item:before {{
+        content: "▪";
+        position: absolute;
+        left: 0;
+        color: {CF_BULLET};
+    }}
+
+    /* ---- Premium links ---- */
+    .premium-link-container {{
+        display: flex; gap: 0.75rem; margin: 0.5rem 0 1rem 0; flex-wrap: wrap;
+    }}
+    .premium-link {{
+        flex: 1; min-width: 180px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        padding: 0.9rem 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+        box-shadow: 0 3px 10px rgba(102,126,234,0.35);
+        text-align: center;
+    }}
+    .premium-link:hover {{ transform: translateY(-2px); box-shadow: 0 6px 18px rgba(102,126,234,0.5); }}
+    .premium-link-title  {{ font-size: 0.95rem; font-weight: 600; margin-bottom: 0.15rem; color: white !important; }}
+    .premium-link-subtitle {{ font-size: 0.75rem; opacity: 0.9; color: white !important; }}
+    .premium-link.qrisk {{ background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); box-shadow: 0 3px 10px rgba(240,147,251,0.35); }}
+    .premium-link.qrisk:hover {{ box-shadow: 0 6px 18px rgba(240,147,251,0.5); }}
+    .premium-link.lai   {{ background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); box-shadow: 0 3px 10px rgba(79,172,254,0.35); }}
+    .premium-link.lai:hover {{ box-shadow: 0 6px 18px rgba(79,172,254,0.5); }}
+
+    /* ---- Section divider ---- */
+    .section-divider {{
+        border: none; height: 1px;
+        background: {DIVIDER};
+        margin: 1.2rem 0;
+    }}
+
+    /* ---- Thin section separator label ---- */
+    .section-sep {{
+        display: flex; align-items: center; gap: 0.6rem;
+        margin: 1.4rem 0 0.6rem 0;
+    }}
+    .section-sep-label {{
+        font-size: 0.72rem; font-weight: 700; letter-spacing: 0.07em;
+        text-transform: uppercase; color: {SECTION_LABEL_COLOR} !important;
+        white-space: nowrap;
+    }}
+    .section-sep-line {{
+        flex: 1; height: 1px; background: {BORDER_COLOR};
+    }}
+
+    /* ---- Reference link pills ---- */
+    .cv-ref-pill {{
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border-radius: 7px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.38rem 0.9rem;
+        white-space: nowrap;
+        text-decoration: none !important;
+        background: {TOOLBAR_BTN_BG};
+        color: {TOOLBAR_BTN_COLOR} !important;
+        border: 1.5px solid {TOOLBAR_BTN_BORDER};
+        transition: border-color 0.15s, color 0.15s;
+        margin-right: 0.4rem;
+    }}
+    .cv-ref-pill:hover {{
+        border-color: {ACCENT};
+        color: {ACCENT} !important;
+    }}
+
+    /* ---- Disabled checkbox ---- */
+    .stCheckbox input:disabled + span {{ color: {TEXT_MUTED} !important; opacity: 0.6 !important; }}
+
+    /* ---- Spinner ---- */
+    .stSpinner > div > div {{ border-top-color: {ACCENT} !important; }}
+
+    /* ---- Scrollbars ---- */
+    ::-webkit-scrollbar {{ width: 6px; height: 6px; }}
+    ::-webkit-scrollbar-track {{ background: {BG_PAGE}; }}
+    ::-webkit-scrollbar-thumb {{ background: {BORDER_COLOR}; border-radius: 3px; }}
+    ::-webkit-scrollbar-thumb:hover {{ background: {ACCENT}; }}
+
+    /* ---- iOS Safari: prevent font scaling on inputs ---- */
+    @media screen and (max-width: 768px) {{
+        input, select, textarea {{ font-size: 16px !important; }}
+    }}
+
+    /* ---- Force input colors cross-platform ---- */
+    input, select, textarea, [contenteditable] {{
+        background-color: {BG_INPUT} !important;
+        color: {INPUT_COLOR} !important;
+    }}
+
+    /* ---- Remove gap between header rows ---- */
+    .header-spacer {{
+        margin-bottom: 0 !important;
+        padding-bottom: 0 !important;
+    }}
+
+    /* ---- Align columns vertically in header ---- */
+    .header-col-align [data-testid="column"] {{
+        display: flex;
+        align-items: center;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -594,57 +919,219 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
 
 
 # ==================== HEADER ====================
+THEME_LABEL = "Light Mode" if is_dark else "Dark Mode"
 
-header_cols = st.columns([2, 1])
+# Top spacer to prevent title clip
+st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
 
-with header_cols[0]:
-    st.markdown(
-        '<div class="main-title">🫀 Cardiovascular Risk Assessment Tool</div>',
-        unsafe_allow_html=True
-    )
+# Row 1: Title (left) + Reference links (right)
+hcol_title, hcol_refs = st.columns([3, 1])
 
-with header_cols[1]:
-    ref1, ref2 = st.columns(2)
-    with ref1:
-        st.markdown(
-            '<a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator" target="_blank" class="cv-ref-pill">↗ AHA PREVENT</a>',
-            unsafe_allow_html=True
-        )
-    with ref2:
-        st.markdown(
-            '<a href="https://qrisk.org/" target="_blank" class="cv-ref-pill">↗ QRISK3</a>',
-            unsafe_allow_html=True
-        )
+with hcol_title:
+    st.markdown(f"""
+    <div style="
+        padding: 0.2rem 0 0.4rem 0;
+        margin: 0;
+    ">
+        <div style="
+            font-size: clamp(1.3rem, 3vw, 1.9rem);
+            font-weight: 800;
+            color: {HEADING_COLOR};
+            line-height: 1.25;
+            letter-spacing: -0.01em;
+            word-break: break-word;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid {ACCENT};
+            margin-bottom: 0;
+        ">🫀 Cardiovascular Risk Assessment Tool</div>
+    </div>
+    """, unsafe_allow_html=True)
 
-controls = st.columns([3, 1, 1])
+with hcol_refs:
+    st.markdown(f"""
+    <div style="
+        display: flex;
+        justify-content: flex-end;
+        align-items: flex-end;
+        height: 100%;
+        padding-bottom: 0.5rem;
+        gap: 0.4rem;
+        flex-wrap: wrap;
+    ">
+        <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
+           target="_blank" class="cv-ref-pill">↗ AHA PREVENT</a>
+        <a href="https://qrisk.org/" target="_blank" class="cv-ref-pill" style="margin-right:0;">↗ QRISK3</a>
+    </div>
+    """, unsafe_allow_html=True)
 
-with controls[1]:
+# Row 2: spacer (left) + Reset + Mode buttons (right)
+st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
+
+_, btn_spacer, btn_reset_col, btn_theme_col = st.columns([3, 0.6, 0.7, 0.7])
+
+with btn_reset_col:
     st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
-    if st.button("↺ Reset", key="btn_reset"):
+    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
         reset_all()
         st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
-with controls[2]:
+with btn_theme_col:
     st.markdown('<div class="cv-theme-btn">', unsafe_allow_html=True)
-    st.button(
-        f"{TOGGLE_ICON} {'Light Mode' if is_dark else 'Dark Mode'}",
-        key="btn_theme",
-        on_click=toggle_theme
-    )
+    st.button(f"{TOGGLE_ICON} {THEME_LABEL}", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div style="height:1.5rem;"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-divider" style="margin-top:0.6rem;margin-bottom:0.4rem;"></div>', unsafe_allow_html=True)
+
 
 # ==================== SECTION SEPARATOR ====================
 def sep(label):
-    st.markdown(
-        f'<div class="section-sep">'
-        f'<span class="section-sep-label">{label}</span>'
-        f'<div class="section-sep-line"></div>'
-        f'</div>',
-        unsafe_allow_html=True
-    )
+    st.markdown(f'<div class="section-sep"><span class="section-sep-label">{label}</span><div class="section-sep-line"></div></div>', unsafe_allow_html=True)
+
+
+# ==================== DEMOGRAPHICS ====================
+sep("Patient Demographics")
+
+d1, d2, d3, d4 = st.columns([1, 1, 1, 1])
+with d1:
+    age_val = opt_num(d1, "Age", minv=1, maxv=110, step=1, key="age")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">years</span>', unsafe_allow_html=True)
+
+with d2:
+    sex = d2.selectbox("Sex", ["Male", "Female"], key="sex")
+
+with d3:
+    eth = d3.selectbox("Ethnicity", ["Indian", "South Asian", "White", "Black", "Other"], key="eth")
+
+d5, d6, d7 = st.columns([1, 1, 1])
+with d5:
+    height_val = opt_num(d5, "Height", minv=100, maxv=220, step=1, key="ht")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">cm</span>', unsafe_allow_html=True)
+
+with d6:
+    weight_val = opt_num(d6, "Weight", minv=20, maxv=300, step=1, key="wt")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">kg</span>', unsafe_allow_html=True)
+
+with d7:
+    bmi = bmi_calc(height_val, weight_val)
+    d7.metric("BMI", f"{bmi:.1f} kg/m²" if bmi is not None else "—")
+
+
+# ==================== VITALS ====================
+sep("Vital Signs")
+
+v1, v2 = st.columns(2)
+with v1:
+    sbp = opt_num(v1, "Systolic BP", minv=60, maxv=260, step=1, key="sbp")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mmHg</span>', unsafe_allow_html=True)
+
+with v2:
+    dbp = opt_num(v2, "Diastolic BP", minv=30, maxv=160, step=1, key="dbp")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mmHg</span>', unsafe_allow_html=True)
+
+
+# ==================== LIPID PROFILE ====================
+sep("Lipid Profile")
+
+lp1, lp2, lp3, lp4 = st.columns(4)
+with lp1:
+    tc = opt_num(lp1, "Total Cholesterol", minv=0, maxv=600, step=1, key="tc")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with lp2:
+    ldl = opt_num(lp2, "LDL-C", minv=0, maxv=400, step=1, key="ldl")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with lp3:
+    hdl = opt_num(lp3, "HDL-C", minv=0, maxv=150, step=1, key="hdl")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with lp4:
+    tg = opt_num(lp4, "Triglycerides", minv=0, maxv=1500, step=1, key="tg")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+nhdl = non_hdl(tc, hdl)
+tc_hdl_ratio = ratio(tc, hdl)
+
+lm1, lm2, lm3 = st.columns(3)
+lm1.metric("Non-HDL-C", f"{nhdl:.0f} mg/dL" if nhdl is not None else "—")
+lm2.metric("TC / HDL Ratio", f"{tc_hdl_ratio:.2f}" if tc_hdl_ratio is not None else "—")
+
+sep("Advanced Lipid Markers")
+al1, al2, al3 = st.columns(3)
+with al1:
+    apob = opt_num(al1, "ApoB", minv=0, maxv=300, step=1, key="apob")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with al2:
+    apoa1 = opt_num(al2, "ApoA1", minv=0, maxv=300, step=1, key="apoa1")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+with al3:
+    lpa = opt_num(al3, "Lp(a)", minv=0, maxv=500, step=1, key="lpa")
+    st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">mg/dL</span>', unsafe_allow_html=True)
+
+apo_ratio = ratio(apob, apoa1)
+am1, am2 = st.columns([1, 3])
+am1.metric("ApoB / ApoA1", f"{apo_ratio:.2f}" if apo_ratio is not None else "—")
+
+
+# ==================== DIABETES & SMOKING ====================
+sep("Metabolic & Lifestyle")
+
+ms1, ms2, ms3 = st.columns([1, 1, 1])
+with ms1:
+    diabetes = ms1.radio("Diabetes", ["No", "Yes"], key="diabetes", horizontal=True)
+
+with ms2:
+    smoke = ms2.selectbox("Smoking Status", ["Never", "Former", "Current"], key="smoke")
+
+with ms3:
+    if diabetes == "Yes":
+        duration = opt_num(ms3, "DM Duration", minv=0, maxv=70, step=1, key="dm_dur")
+        st.markdown('<span style="font-size:0.72rem;color:' + UNIT_COLOR + ';">years</span>', unsafe_allow_html=True)
+        treatment = ms3.radio("Treatment", ["Oral", "Insulin"], key="dm_tx", horizontal=True)
+    else:
+        duration = None
+        treatment = None
+
+
+# ==================== MEDICAL HISTORY ====================
+sep("Medical History")
+
+mh1, mh2, mh3 = st.columns(3)
+
+if 'none_hist' not in st.session_state:
+    st.session_state.none_hist = False
+
+with mh1:
+    mi = st.checkbox("Myocardial Infarction", disabled=st.session_state.none_hist, key="mi")
+    stroke = st.checkbox("Stroke / TIA", disabled=st.session_state.none_hist, key="stroke")
+    pad = st.checkbox("Peripheral Artery Disease", disabled=st.session_state.none_hist, key="pad")
+    revasc = st.checkbox("Revascularization", disabled=st.session_state.none_hist, key="revasc")
+
+with mh2:
+    ckd = st.checkbox("Chronic Kidney Disease", disabled=st.session_state.none_hist, key="ckd")
+    hf = st.checkbox("Heart Failure", disabled=st.session_state.none_hist, key="hf")
+    nafld = st.checkbox("NAFLD", disabled=st.session_state.none_hist, key="nafld")
+    mets = st.checkbox("Metabolic Syndrome", disabled=st.session_state.none_hist, key="mets")
+
+with mh3:
+    atrial_fib = st.checkbox("Atrial Fibrillation", disabled=st.session_state.none_hist, key="afib")
+    rheumatoid_arthritis = st.checkbox("Rheumatoid Arthritis", disabled=st.session_state.none_hist, key="ra")
+    migraine = st.checkbox("Migraine", disabled=st.session_state.none_hist, key="migraine")
+
+none_hist_check = st.checkbox("None of the above", key="none_hist_check")
+if none_hist_check != st.session_state.none_hist:
+    st.session_state.none_hist = none_hist_check
+    if none_hist_check:
+        for k in ['mi', 'stroke', 'pad', 'revasc', 'ckd', 'hf', 'nafld', 'mets', 'afib', 'ra', 'migraine']:
+            if k in st.session_state:
+                st.session_state[k] = False
+    st.rerun()
+
+ascvd = mi or stroke or pad or revasc
+
 
 # ==================== FAMILY HISTORY ====================
 sep("Family History")
