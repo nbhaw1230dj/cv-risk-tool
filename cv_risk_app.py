@@ -636,6 +636,16 @@ with controls[2]:
 
 st.markdown('<div style="height:1.5rem;"></div>', unsafe_allow_html=True)
 
+# ==================== SECTION SEPARATOR ====================
+def sep(label):
+    st.markdown(
+        f'<div class="section-sep">'
+        f'<span class="section-sep-label">{label}</span>'
+        f'<div class="section-sep-line"></div>'
+        f'</div>',
+        unsafe_allow_html=True
+    )
+
 # ==================== FAMILY HISTORY ====================
 sep("Family History")
 st.caption("Premature ASCVD: Male <55 yrs · Female <65 yrs in first-degree relatives")
