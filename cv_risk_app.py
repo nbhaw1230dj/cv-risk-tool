@@ -29,7 +29,7 @@ if is_dark:
     BG_INPUT       = "#252836"
     TEXT_PRIMARY   = "#e8eaf0"
     TEXT_SECONDARY = "#9aa0b8"
-    TEXT_MUTED     = "#6b7280"
+    TEXT_MUTED     = "#9aa0b8"
     BORDER_COLOR   = "#2e3347"
     ACCENT         = "#4c9ef8"
     ACCENT_DARK    = "#3a82d6"
@@ -76,13 +76,14 @@ if is_dark:
     TOOLBAR_BTN_BORDER= "#4c9ef8"
     TOOLBAR_BTN_COLOR = "#e8eaf0"
     SECTION_LABEL_COLOR = "#4c9ef8"
-    # Dark mode button specifics
     RESET_BTN_BG      = "#2a2f45"
     RESET_BTN_COLOR   = "#e8eaf0"
     RESET_BTN_BORDER  = "#6b7a9e"
+    RESET_BTN_HOVER_BG = "#3a4560"
     THEME_BTN_BG      = "#4c9ef8"
     THEME_BTN_COLOR   = "#ffffff"
     THEME_BTN_BORDER  = "#4c9ef8"
+    THEME_BTN_HOVER_BG = "#3a82d6"
 else:
     BG_PAGE        = "#f0f2f6"
     BG_SECONDARY   = "#ffffff"
@@ -136,35 +137,39 @@ else:
     TOOLBAR_BTN_BORDER= "#dde1e9"
     TOOLBAR_BTN_COLOR = "#475569"
     SECTION_LABEL_COLOR = "#2563eb"
-    # Light mode button specifics
     RESET_BTN_BG      = "#ffffff"
     RESET_BTN_COLOR   = "#374151"
     RESET_BTN_BORDER  = "#d1d5db"
+    RESET_BTN_HOVER_BG = "#f9fafb"
     THEME_BTN_BG      = "#2563eb"
     THEME_BTN_COLOR   = "#ffffff"
     THEME_BTN_BORDER  = "#2563eb"
+    THEME_BTN_HOVER_BG = "#1e40af"
 
 # ========== INJECT CSS ==========
 st.markdown(f"""
 <style>
+    /* ---- CRITICAL: Fix top white bar - force all containers to match theme ---- */
+    html, body, .stApp, .main,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewBlockContainer"],
+    [data-testid="stHeader"],
+    header, 
+    .stApp > header {{
+        background-color: {BG_PAGE} !important;
+        color: {TEXT_PRIMARY} !important;
+    }}
+
     /* ---- Hide Streamlit chrome ---- */
     button[kind="header"], [data-testid="stToolbar"],
     #MainMenu, .stDeployButton, footer {{
         display: none !important;
     }}
 
-    /* ---- Global page background ---- */
-    html, body, .stApp, .main,
-    [data-testid="stAppViewContainer"],
-    [data-testid="stAppViewBlockContainer"] {{
-        background-color: {BG_PAGE} !important;
-        color: {TEXT_PRIMARY} !important;
-    }}
-
-    /* ---- Block container: add top padding so title never clips ---- */
+    /* ---- Block container: INCREASED top padding to prevent title clipping ---- */
     .block-container {{
         background-color: {BG_PAGE} !important;
-        padding-top: 2.5rem !important;
+        padding-top: 4rem !important;
         padding-bottom: 3rem !important;
         max-width: 1200px !important;
     }}
@@ -174,15 +179,15 @@ st.markdown(f"""
         color: {TEXT_PRIMARY} !important;
     }}
 
-    /* ---- Section headers (h2) ---- */
+    /* ---- Section headers (h2) - INCREASED SIZE ---- */
     h2 {{
         color: {SECTION_LABEL_COLOR} !important;
-        font-size: 0.8rem !important;
+        font-size: 1rem !important;
         font-weight: 700 !important;
         text-transform: uppercase !important;
         letter-spacing: 0.08em !important;
-        margin-top: 1.6rem !important;
-        margin-bottom: 0.6rem !important;
+        margin-top: 2rem !important;
+        margin-bottom: 0.8rem !important;
         padding: 0 !important;
         border: none !important;
         background: none !important;
@@ -192,7 +197,7 @@ st.markdown(f"""
     h3 {{
         color: {TEXT_PRIMARY} !important;
         font-weight: 600 !important;
-        font-size: 1rem !important;
+        font-size: 1.1rem !important;
         margin-top: 0 !important;
     }}
 
@@ -374,7 +379,7 @@ st.markdown(f"""
         box-shadow: none !important;
     }}
 
-    /* ---- Reset button override ---- */
+    /* ---- Reset button - IMPROVED CONTRAST ---- */
     .cv-reset-btn .stButton > button {{
         background-color: {RESET_BTN_BG} !important;
         color: {RESET_BTN_COLOR} !important;
@@ -382,18 +387,19 @@ st.markdown(f"""
         border-radius: 7px !important;
         font-size: 0.82rem !important;
         font-weight: 600 !important;
-        padding: 0.4rem 1rem !important;
+        padding: 0.5rem 1.2rem !important;
         width: 100% !important;
-        box-shadow: none !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
         transition: all 0.15s !important;
     }}
     .cv-reset-btn .stButton > button:hover {{
         border-color: {ACCENT} !important;
         color: {ACCENT} !important;
-        background-color: {RESET_BTN_BG} !important;
+        background-color: {RESET_BTN_HOVER_BG} !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     }}
 
-    /* ---- Theme toggle button override ---- */
+    /* ---- Theme toggle button - IMPROVED CONTRAST ---- */
     .cv-theme-btn .stButton > button {{
         background-color: {THEME_BTN_BG} !important;
         color: {THEME_BTN_COLOR} !important;
@@ -401,15 +407,16 @@ st.markdown(f"""
         border-radius: 7px !important;
         font-size: 0.82rem !important;
         font-weight: 600 !important;
-        padding: 0.4rem 1rem !important;
+        padding: 0.5rem 1.2rem !important;
         width: 100% !important;
-        box-shadow: none !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
         transition: all 0.15s !important;
     }}
     .cv-theme-btn .stButton > button:hover {{
-        background-color: {ACCENT_DARK} !important;
-        border-color: {ACCENT_DARK} !important;
+        background-color: {THEME_BTN_HOVER_BG} !important;
+        border-color: {THEME_BTN_HOVER_BG} !important;
         color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     }}
 
     /* ---- Markdown ---- */
@@ -528,7 +535,7 @@ st.markdown(f"""
         flex: 1; height: 1px; background: {BORDER_COLOR};
     }}
 
-    /* ---- Reference link pills ---- */
+    /* ---- Reference link pills - IMPROVED CONTRAST ---- */
     .cv-ref-pill {{
         display: inline-flex;
         align-items: center;
@@ -536,18 +543,21 @@ st.markdown(f"""
         border-radius: 7px;
         font-size: 0.8rem;
         font-weight: 600;
-        padding: 0.38rem 0.9rem;
+        padding: 0.45rem 1rem;
         white-space: nowrap;
         text-decoration: none !important;
         background: {TOOLBAR_BTN_BG};
         color: {TOOLBAR_BTN_COLOR} !important;
         border: 1.5px solid {TOOLBAR_BTN_BORDER};
-        transition: border-color 0.15s, color 0.15s;
+        transition: all 0.15s;
         margin-right: 0.4rem;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }}
     .cv-ref-pill:hover {{
         border-color: {ACCENT};
         color: {ACCENT} !important;
+        background: {BG_SECONDARY};
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
     }}
 
     /* ---- Disabled checkbox ---- */
@@ -562,27 +572,29 @@ st.markdown(f"""
     ::-webkit-scrollbar-thumb {{ background: {BORDER_COLOR}; border-radius: 3px; }}
     ::-webkit-scrollbar-thumb:hover {{ background: {ACCENT}; }}
 
-    /* ---- iOS Safari: prevent font scaling on inputs ---- */
+    /* ---- Mobile responsiveness ---- */
     @media screen and (max-width: 768px) {{
         input, select, textarea {{ font-size: 16px !important; }}
+        
+        .block-container {{
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }}
+        
+        .cv-ref-pill {{
+            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+        }}
+        
+        h2 {{
+            font-size: 0.9rem !important;
+        }}
     }}
 
     /* ---- Force input colors cross-platform ---- */
     input, select, textarea, [contenteditable] {{
         background-color: {BG_INPUT} !important;
         color: {INPUT_COLOR} !important;
-    }}
-
-    /* ---- Remove gap between header rows ---- */
-    .header-spacer {{
-        margin-bottom: 0 !important;
-        padding-bottom: 0 !important;
-    }}
-
-    /* ---- Align columns vertically in header ---- */
-    .header-col-align [data-testid="column"] {{
-        display: flex;
-        align-items: center;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -921,26 +933,23 @@ def calculate_aha_prevent(age, sex, race, tc, hdl, sbp, bp_treated, diabetes, sm
 # ==================== HEADER ====================
 THEME_LABEL = "Light Mode" if is_dark else "Dark Mode"
 
-# Top spacer to prevent title clip
-st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
+# Top spacer to prevent title clip - INCREASED
+st.markdown('<div style="height: 1rem;"></div>', unsafe_allow_html=True)
 
 # Row 1: Title (left) + Reference links (right)
-hcol_title, hcol_refs = st.columns([3, 1])
+hcol_title, hcol_refs = st.columns([2, 1])
 
 with hcol_title:
     st.markdown(f"""
-    <div style="
-        padding: 0.2rem 0 0.4rem 0;
-        margin: 0;
-    ">
+    <div style="padding: 0.2rem 0 0.4rem 0; margin: 0;">
         <div style="
-            font-size: clamp(1.3rem, 3vw, 1.9rem);
+            font-size: clamp(1.6rem, 4vw, 2.4rem);
             font-weight: 800;
             color: {HEADING_COLOR};
-            line-height: 1.25;
+            line-height: 1.2;
             letter-spacing: -0.01em;
             word-break: break-word;
-            padding-bottom: 0.5rem;
+            padding-bottom: 0.6rem;
             border-bottom: 3px solid {ACCENT};
             margin-bottom: 0;
         ">🫀 Cardiovascular Risk Assessment Tool</div>
@@ -954,8 +963,8 @@ with hcol_refs:
         justify-content: flex-end;
         align-items: flex-end;
         height: 100%;
-        padding-bottom: 0.5rem;
-        gap: 0.4rem;
+        padding-bottom: 0.6rem;
+        gap: 0.5rem;
         flex-wrap: wrap;
     ">
         <a href="https://professional.heart.org/en/guidelines-and-statements/prevent-calculator"
@@ -965,9 +974,9 @@ with hcol_refs:
     """, unsafe_allow_html=True)
 
 # Row 2: spacer (left) + Reset + Mode buttons (right)
-st.markdown('<div style="height: 0.5rem;"></div>', unsafe_allow_html=True)
+st.markdown('<div style="height: 0.7rem;"></div>', unsafe_allow_html=True)
 
-_, btn_spacer, btn_reset_col, btn_theme_col = st.columns([3, 0.6, 0.7, 0.7])
+_, btn_spacer, btn_reset_col, btn_theme_col = st.columns([2, 0.5, 0.75, 0.75])
 
 with btn_reset_col:
     st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
@@ -981,7 +990,7 @@ with btn_theme_col:
     st.button(f"{TOGGLE_ICON} {THEME_LABEL}", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
     st.markdown('</div>', unsafe_allow_html=True)
 
-st.markdown('<div class="section-divider" style="margin-top:0.6rem;margin-bottom:0.4rem;"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-divider" style="margin-top:0.8rem;margin-bottom:0.6rem;"></div>', unsafe_allow_html=True)
 
 
 # ==================== SECTION SEPARATOR ====================
@@ -1099,10 +1108,12 @@ with ms3:
 # ==================== MEDICAL HISTORY ====================
 sep("Medical History")
 
-mh1, mh2, mh3 = st.columns(3)
-
+# Initialize session state flags if not exist
 if 'none_hist' not in st.session_state:
     st.session_state.none_hist = False
+
+# Medical history checkboxes
+mh1, mh2, mh3 = st.columns(3)
 
 with mh1:
     mi = st.checkbox("Myocardial Infarction", disabled=st.session_state.none_hist, key="mi")
@@ -1121,13 +1132,10 @@ with mh3:
     rheumatoid_arthritis = st.checkbox("Rheumatoid Arthritis", disabled=st.session_state.none_hist, key="ra")
     migraine = st.checkbox("Migraine", disabled=st.session_state.none_hist, key="migraine")
 
-none_hist_check = st.checkbox("None of the above", key="none_hist_check")
+# "None of the above" checkbox with proper handling
+none_hist_check = st.checkbox("None of the above", key="none_hist_check", value=st.session_state.none_hist)
 if none_hist_check != st.session_state.none_hist:
     st.session_state.none_hist = none_hist_check
-    if none_hist_check:
-        for k in ['mi', 'stroke', 'pad', 'revasc', 'ckd', 'hf', 'nafld', 'mets', 'afib', 'ra', 'migraine']:
-            if k in st.session_state:
-                st.session_state[k] = False
     st.rerun()
 
 ascvd = mi or stroke or pad or revasc
@@ -1149,13 +1157,9 @@ with fh2:
     fh_htn = st.checkbox("Family Hx of Hypertension", disabled=st.session_state.none_fh, key="fh_htn")
     fh_fh = st.checkbox("Familial Hypercholesterolemia", disabled=st.session_state.none_fh, key="fh_fh")
 
-none_fh_check = st.checkbox("None of the above", key="none_fh_check")
+none_fh_check = st.checkbox("None of the above", key="none_fh_check", value=st.session_state.none_fh)
 if none_fh_check != st.session_state.none_fh:
     st.session_state.none_fh = none_fh_check
-    if none_fh_check:
-        for k in ['prem_ascvd', 'fh_dm', 'fh_htn', 'fh_fh']:
-            if k in st.session_state:
-                st.session_state[k] = False
     st.rerun()
 
 
@@ -1174,13 +1178,9 @@ with med2:
     antidm = st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
     antiplate = st.checkbox("Antiplatelet", disabled=st.session_state.none_med, key="antiplate")
 
-none_med_check = st.checkbox("None of the above", key="none_med_check")
+none_med_check = st.checkbox("None of the above", key="none_med_check", value=st.session_state.none_med)
 if none_med_check != st.session_state.none_med:
     st.session_state.none_med = none_med_check
-    if none_med_check:
-        for k in ['on_statin', 'antihtn', 'antidm', 'antiplate']:
-            if k in st.session_state:
-                st.session_state[k] = False
     st.rerun()
 
 
@@ -1202,7 +1202,7 @@ else:
 
 
 # ==================== SCORE METRICS ====================
-st.markdown('<div class="section-divider" style="margin-top:1.8rem;"></div>', unsafe_allow_html=True)
+st.markdown('<div class="section-divider" style="margin-top:2rem;"></div>', unsafe_allow_html=True)
 sep("Calculated 10-Year Risk Scores")
 
 sc1, sc2, sc3 = st.columns(3)
