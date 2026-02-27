@@ -11,17 +11,27 @@ st.set_page_config(
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 
+# Initialize reset trigger
+if "reset_trigger" not in st.session_state:
+    st.session_state.reset_trigger = 0
+
 def toggle_theme():
     st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
 
-def reset_all():
-    """Properly reset all form fields and session state"""
-    preserve = {"theme"}
-    keys_to_delete = [k for k in st.session_state.keys() if k not in preserve]
+def trigger_reset():
+    """Set flag to trigger reset on next render"""
+    st.session_state.reset_trigger += 1
+
+# Check if reset was triggered and execute it BEFORE rendering widgets
+if st.session_state.reset_trigger > 0:
+    preserve = {"theme", "reset_trigger"}
+    keys_to_delete = [k for k in list(st.session_state.keys()) if k not in preserve]
     for k in keys_to_delete:
         del st.session_state[k]
-    # Force rerun to clear all widgets
-    st.rerun()
+    # Reset the trigger after clearing
+    if st.session_state.reset_trigger > 1:
+        st.session_state.reset_trigger = 0
+        st.rerun()
 
 is_dark = st.session_state.theme == "dark"
 
@@ -230,7 +240,7 @@ st.markdown(f"""
         min-width: 42px;
     }}
 
-    /* ---- Number inputs ---- */
+    /* ---- Number inputs - FIXED step buttons ---- */
     .stNumberInput input,
     input[type="number"],
     input[type="text"] {{
@@ -246,12 +256,24 @@ st.markdown(f"""
         box-shadow: 0 0 0 3px {ACCENT}22 !important;
         outline: none !important;
     }}
+    /* CRITICAL: Hide step buttons completely */
+    .stNumberInput button,
     .stNumberInput [data-testid="stNumberInputStepUp"],
-    .stNumberInput [data-testid="stNumberInputStepDown"] {{
+    .stNumberInput [data-testid="stNumberInputStepDown"],
+    button[data-testid="stNumberInputStepUp"],
+    button[data-testid="stNumberInputStepDown"] {{
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
+        pointer-events: none !important;
     }}
     .stNumberInput > div {{
         gap: 0 !important;
+    }}
+    .stNumberInput {{
+        position: relative !important;
     }}
 
     /* ---- Selectbox / Dropdown ---- */
@@ -384,11 +406,21 @@ st.markdown(f"""
         box-shadow: none !important;
     }}
 
-    /* ---- Reset button - FIXED LIGHT MODE CONTRAST ---- */
+    /* ---- Reset button - ULTRA AGGRESSIVE FIXES ---- */
+    .cv-reset-btn,
+    .cv-reset-btn > div,
+    .cv-reset-btn .stButton,
+    .cv-reset-btn .stButton > button {{
+        visibility: visible !important;
+        opacity: 1 !important;
+    }}
+    
     .cv-reset-btn .stButton > button {{
         background-color: {RESET_BTN_BG} !important;
+        background: {RESET_BTN_BG} !important;
         color: {RESET_BTN_COLOR} !important;
         border: 2px solid {RESET_BTN_BORDER} !important;
+        border-color: {RESET_BTN_BORDER} !important;
         border-radius: 7px !important;
         font-size: 0.82rem !important;
         font-weight: 700 !important;
@@ -396,20 +428,39 @@ st.markdown(f"""
         width: 100% !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.12) !important;
         transition: all 0.15s ease !important;
+        text-align: center !important;
+        line-height: 1.5 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: {RESET_BTN_COLOR} !important;
     }}
+    
     .cv-reset-btn .stButton > button:hover {{
         border-color: {ACCENT} !important;
         color: {ACCENT} !important;
         background-color: {RESET_BTN_HOVER_BG} !important;
+        background: {RESET_BTN_HOVER_BG} !important;
         box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;
         transform: translateY(-1px) !important;
+        -webkit-text-fill-color: {ACCENT} !important;
     }}
 
-    /* ---- Theme toggle button - FIXED LIGHT MODE CONTRAST ---- */
+    /* ---- Theme toggle button - ULTRA AGGRESSIVE FIXES ---- */
+    .cv-theme-btn,
+    .cv-theme-btn > div,
+    .cv-theme-btn .stButton,
+    .cv-theme-btn .stButton > button {{
+        visibility: visible !important;
+        opacity: 1 !important;
+    }}
+    
     .cv-theme-btn .stButton > button {{
         background-color: {THEME_BTN_BG} !important;
+        background: {THEME_BTN_BG} !important;
         color: {THEME_BTN_COLOR} !important;
         border: 2px solid {THEME_BTN_BORDER} !important;
+        border-color: {THEME_BTN_BORDER} !important;
         border-radius: 7px !important;
         font-size: 0.82rem !important;
         font-weight: 700 !important;
@@ -417,13 +468,22 @@ st.markdown(f"""
         width: 100% !important;
         box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25) !important;
         transition: all 0.15s ease !important;
+        text-align: center !important;
+        line-height: 1.5 !important;
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        -webkit-text-fill-color: {THEME_BTN_COLOR} !important;
     }}
+    
     .cv-theme-btn .stButton > button:hover {{
         background-color: {THEME_BTN_HOVER_BG} !important;
+        background: {THEME_BTN_HOVER_BG} !important;
         border-color: {THEME_BTN_HOVER_BG} !important;
         color: #ffffff !important;
         box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35) !important;
         transform: translateY(-1px) !important;
+        -webkit-text-fill-color: #ffffff !important;
     }}
 
     /* ---- Markdown ---- */
@@ -987,8 +1047,8 @@ _, btn_spacer, btn_reset_col, btn_theme_col = st.columns([2, 0.5, 0.75, 0.75])
 
 with btn_reset_col:
     st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
-    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
-        reset_all()
+    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs", on_click=trigger_reset):
+        pass  # The actual reset happens at the top of the script
     st.markdown('</div>', unsafe_allow_html=True)
 
 with btn_theme_col:
