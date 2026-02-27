@@ -15,10 +15,13 @@ def toggle_theme():
     st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
 
 def reset_all():
+    """Properly reset all form fields and session state"""
     preserve = {"theme"}
     keys_to_delete = [k for k in st.session_state.keys() if k not in preserve]
     for k in keys_to_delete:
         del st.session_state[k]
+    # Force rerun to clear all widgets
+    st.rerun()
 
 is_dark = st.session_state.theme == "dark"
 
@@ -85,6 +88,7 @@ if is_dark:
     THEME_BTN_BORDER  = "#4c9ef8"
     THEME_BTN_HOVER_BG = "#3a82d6"
 else:
+    # LIGHT MODE - FIXED CONTRAST
     BG_PAGE        = "#f0f2f6"
     BG_SECONDARY   = "#ffffff"
     BG_INPUT       = "#ffffff"
@@ -137,10 +141,11 @@ else:
     TOOLBAR_BTN_BORDER= "#dde1e9"
     TOOLBAR_BTN_COLOR = "#475569"
     SECTION_LABEL_COLOR = "#2563eb"
-    RESET_BTN_BG      = "#ffffff"
-    RESET_BTN_COLOR   = "#374151"
-    RESET_BTN_BORDER  = "#d1d5db"
-    RESET_BTN_HOVER_BG = "#f9fafb"
+    # LIGHT MODE BUTTON FIXES - IMPROVED CONTRAST
+    RESET_BTN_BG      = "#f8fafc"
+    RESET_BTN_COLOR   = "#1e293b"
+    RESET_BTN_BORDER  = "#94a3b8"
+    RESET_BTN_HOVER_BG = "#e2e8f0"
     THEME_BTN_BG      = "#2563eb"
     THEME_BTN_COLOR   = "#ffffff"
     THEME_BTN_BORDER  = "#2563eb"
@@ -379,44 +384,46 @@ st.markdown(f"""
         box-shadow: none !important;
     }}
 
-    /* ---- Reset button - IMPROVED CONTRAST ---- */
+    /* ---- Reset button - FIXED LIGHT MODE CONTRAST ---- */
     .cv-reset-btn .stButton > button {{
         background-color: {RESET_BTN_BG} !important;
         color: {RESET_BTN_COLOR} !important;
-        border: 1.5px solid {RESET_BTN_BORDER} !important;
+        border: 2px solid {RESET_BTN_BORDER} !important;
         border-radius: 7px !important;
         font-size: 0.82rem !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         padding: 0.5rem 1.2rem !important;
         width: 100% !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-        transition: all 0.15s !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.12) !important;
+        transition: all 0.15s ease !important;
     }}
     .cv-reset-btn .stButton > button:hover {{
         border-color: {ACCENT} !important;
         color: {ACCENT} !important;
         background-color: {RESET_BTN_HOVER_BG} !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;
+        transform: translateY(-1px) !important;
     }}
 
-    /* ---- Theme toggle button - IMPROVED CONTRAST ---- */
+    /* ---- Theme toggle button - FIXED LIGHT MODE CONTRAST ---- */
     .cv-theme-btn .stButton > button {{
         background-color: {THEME_BTN_BG} !important;
         color: {THEME_BTN_COLOR} !important;
-        border: 1.5px solid {THEME_BTN_BORDER} !important;
+        border: 2px solid {THEME_BTN_BORDER} !important;
         border-radius: 7px !important;
         font-size: 0.82rem !important;
-        font-weight: 600 !important;
+        font-weight: 700 !important;
         padding: 0.5rem 1.2rem !important;
         width: 100% !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-        transition: all 0.15s !important;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25) !important;
+        transition: all 0.15s ease !important;
     }}
     .cv-theme-btn .stButton > button:hover {{
         background-color: {THEME_BTN_HOVER_BG} !important;
         border-color: {THEME_BTN_HOVER_BG} !important;
         color: #ffffff !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35) !important;
+        transform: translateY(-1px) !important;
     }}
 
     /* ---- Markdown ---- */
@@ -982,7 +989,6 @@ with btn_reset_col:
     st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
     if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
         reset_all()
-        st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 with btn_theme_col:
@@ -1163,7 +1169,7 @@ if none_fh_check != st.session_state.none_fh:
     st.rerun()
 
 
-# ==================== MEDICATIONS ====================
+# ==================== MEDICATIONS (STATIN REMOVED) ====================
 sep("Current Medications")
 
 if 'none_med' not in st.session_state:
@@ -1171,11 +1177,10 @@ if 'none_med' not in st.session_state:
 
 med1, med2 = st.columns(2)
 with med1:
-    on_statin = st.checkbox("Statin", disabled=st.session_state.none_med, key="on_statin")
     antihtn = st.checkbox("Antihypertensive", disabled=st.session_state.none_med, key="antihtn")
+    antidm = st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
 
 with med2:
-    antidm = st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
     antiplate = st.checkbox("Antiplatelet", disabled=st.session_state.none_med, key="antiplate")
 
 none_med_check = st.checkbox("None of the above", key="none_med_check", value=st.session_state.none_med)
