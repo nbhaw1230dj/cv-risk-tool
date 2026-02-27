@@ -11,27 +11,14 @@ st.set_page_config(
 if "theme" not in st.session_state:
     st.session_state.theme = "light"
 
-# Initialize reset trigger
-if "reset_trigger" not in st.session_state:
-    st.session_state.reset_trigger = 0
-
 def toggle_theme():
     st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
 
-def trigger_reset():
-    """Set flag to trigger reset on next render"""
-    st.session_state.reset_trigger += 1
-
-# Check if reset was triggered and execute it BEFORE rendering widgets
-if st.session_state.reset_trigger > 0:
-    preserve = {"theme", "reset_trigger"}
-    keys_to_delete = [k for k in list(st.session_state.keys()) if k not in preserve]
+def reset_all():
+    preserve = {"theme"}
+    keys_to_delete = [k for k in st.session_state.keys() if k not in preserve]
     for k in keys_to_delete:
         del st.session_state[k]
-    # Reset the trigger after clearing
-    if st.session_state.reset_trigger > 1:
-        st.session_state.reset_trigger = 0
-        st.rerun()
 
 is_dark = st.session_state.theme == "dark"
 
@@ -98,7 +85,6 @@ if is_dark:
     THEME_BTN_BORDER  = "#4c9ef8"
     THEME_BTN_HOVER_BG = "#3a82d6"
 else:
-    # LIGHT MODE - FIXED CONTRAST
     BG_PAGE        = "#f0f2f6"
     BG_SECONDARY   = "#ffffff"
     BG_INPUT       = "#ffffff"
@@ -151,11 +137,10 @@ else:
     TOOLBAR_BTN_BORDER= "#dde1e9"
     TOOLBAR_BTN_COLOR = "#475569"
     SECTION_LABEL_COLOR = "#2563eb"
-    # LIGHT MODE BUTTON FIXES - IMPROVED CONTRAST
-    RESET_BTN_BG      = "#f8fafc"
-    RESET_BTN_COLOR   = "#1e293b"
-    RESET_BTN_BORDER  = "#94a3b8"
-    RESET_BTN_HOVER_BG = "#e2e8f0"
+    RESET_BTN_BG      = "#ffffff"
+    RESET_BTN_COLOR   = "#374151"
+    RESET_BTN_BORDER  = "#d1d5db"
+    RESET_BTN_HOVER_BG = "#f9fafb"
     THEME_BTN_BG      = "#2563eb"
     THEME_BTN_COLOR   = "#ffffff"
     THEME_BTN_BORDER  = "#2563eb"
@@ -240,7 +225,7 @@ st.markdown(f"""
         min-width: 42px;
     }}
 
-    /* ---- Number inputs - FIXED step buttons ---- */
+    /* ---- Number inputs ---- */
     .stNumberInput input,
     input[type="number"],
     input[type="text"] {{
@@ -256,24 +241,12 @@ st.markdown(f"""
         box-shadow: 0 0 0 3px {ACCENT}22 !important;
         outline: none !important;
     }}
-    /* CRITICAL: Hide step buttons completely */
-    .stNumberInput button,
     .stNumberInput [data-testid="stNumberInputStepUp"],
-    .stNumberInput [data-testid="stNumberInputStepDown"],
-    button[data-testid="stNumberInputStepUp"],
-    button[data-testid="stNumberInputStepDown"] {{
+    .stNumberInput [data-testid="stNumberInputStepDown"] {{
         display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        width: 0 !important;
-        height: 0 !important;
-        pointer-events: none !important;
     }}
     .stNumberInput > div {{
         gap: 0 !important;
-    }}
-    .stNumberInput {{
-        position: relative !important;
     }}
 
     /* ---- Selectbox / Dropdown ---- */
@@ -406,84 +379,44 @@ st.markdown(f"""
         box-shadow: none !important;
     }}
 
-    /* ---- Reset button - ULTRA AGGRESSIVE FIXES ---- */
-    .cv-reset-btn,
-    .cv-reset-btn > div,
-    .cv-reset-btn .stButton,
-    .cv-reset-btn .stButton > button {{
-        visibility: visible !important;
-        opacity: 1 !important;
-    }}
-    
+    /* ---- Reset button - IMPROVED CONTRAST ---- */
     .cv-reset-btn .stButton > button {{
         background-color: {RESET_BTN_BG} !important;
-        background: {RESET_BTN_BG} !important;
         color: {RESET_BTN_COLOR} !important;
-        border: 2px solid {RESET_BTN_BORDER} !important;
-        border-color: {RESET_BTN_BORDER} !important;
+        border: 1.5px solid {RESET_BTN_BORDER} !important;
         border-radius: 7px !important;
         font-size: 0.82rem !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         padding: 0.5rem 1.2rem !important;
         width: 100% !important;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.12) !important;
-        transition: all 0.15s ease !important;
-        text-align: center !important;
-        line-height: 1.5 !important;
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: {RESET_BTN_COLOR} !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        transition: all 0.15s !important;
     }}
-    
     .cv-reset-btn .stButton > button:hover {{
         border-color: {ACCENT} !important;
         color: {ACCENT} !important;
         background-color: {RESET_BTN_HOVER_BG} !important;
-        background: {RESET_BTN_HOVER_BG} !important;
-        box-shadow: 0 3px 8px rgba(0,0,0,0.18) !important;
-        transform: translateY(-1px) !important;
-        -webkit-text-fill-color: {ACCENT} !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     }}
 
-    /* ---- Theme toggle button - ULTRA AGGRESSIVE FIXES ---- */
-    .cv-theme-btn,
-    .cv-theme-btn > div,
-    .cv-theme-btn .stButton,
-    .cv-theme-btn .stButton > button {{
-        visibility: visible !important;
-        opacity: 1 !important;
-    }}
-    
+    /* ---- Theme toggle button - IMPROVED CONTRAST ---- */
     .cv-theme-btn .stButton > button {{
         background-color: {THEME_BTN_BG} !important;
-        background: {THEME_BTN_BG} !important;
         color: {THEME_BTN_COLOR} !important;
-        border: 2px solid {THEME_BTN_BORDER} !important;
-        border-color: {THEME_BTN_BORDER} !important;
+        border: 1.5px solid {THEME_BTN_BORDER} !important;
         border-radius: 7px !important;
         font-size: 0.82rem !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         padding: 0.5rem 1.2rem !important;
         width: 100% !important;
-        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25) !important;
-        transition: all 0.15s ease !important;
-        text-align: center !important;
-        line-height: 1.5 !important;
-        display: inline-block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        -webkit-text-fill-color: {THEME_BTN_COLOR} !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        transition: all 0.15s !important;
     }}
-    
     .cv-theme-btn .stButton > button:hover {{
         background-color: {THEME_BTN_HOVER_BG} !important;
-        background: {THEME_BTN_HOVER_BG} !important;
         border-color: {THEME_BTN_HOVER_BG} !important;
         color: #ffffff !important;
-        box-shadow: 0 3px 8px rgba(37, 99, 235, 0.35) !important;
-        transform: translateY(-1px) !important;
-        -webkit-text-fill-color: #ffffff !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
     }}
 
     /* ---- Markdown ---- */
@@ -1047,8 +980,9 @@ _, btn_spacer, btn_reset_col, btn_theme_col = st.columns([2, 0.5, 0.75, 0.75])
 
 with btn_reset_col:
     st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
-    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs", on_click=trigger_reset):
-        pass  # The actual reset happens at the top of the script
+    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
+        reset_all()
+        st.rerun()
     st.markdown('</div>', unsafe_allow_html=True)
 
 with btn_theme_col:
@@ -1229,7 +1163,7 @@ if none_fh_check != st.session_state.none_fh:
     st.rerun()
 
 
-# ==================== MEDICATIONS (STATIN REMOVED) ====================
+# ==================== MEDICATIONS ====================
 sep("Current Medications")
 
 if 'none_med' not in st.session_state:
@@ -1237,10 +1171,11 @@ if 'none_med' not in st.session_state:
 
 med1, med2 = st.columns(2)
 with med1:
+    on_statin = st.checkbox("Statin", disabled=st.session_state.none_med, key="on_statin")
     antihtn = st.checkbox("Antihypertensive", disabled=st.session_state.none_med, key="antihtn")
-    antidm = st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
 
 with med2:
+    antidm = st.checkbox("Antidiabetic", disabled=st.session_state.none_med, key="antidm")
     antiplate = st.checkbox("Antiplatelet", disabled=st.session_state.none_med, key="antiplate")
 
 none_med_check = st.checkbox("None of the above", key="none_med_check", value=st.session_state.none_med)
