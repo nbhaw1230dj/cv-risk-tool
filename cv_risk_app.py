@@ -128,11 +128,13 @@ else:
     TOOLBAR_BTN_BORDER= "#dde1e9"
     TOOLBAR_BTN_COLOR = "#475569"
     SECTION_LABEL_COLOR = "#2563eb"
-  # Light mode toggle button - HIGH CONTRAST
-THEME_BTN_BG      = "#ffffff"  # White background
-THEME_BTN_COLOR   = "#1e293b"  # Dark text
-THEME_BTN_BORDER  = "#1e293b"  # Dark border
-THEME_BTN_HOVER_BG = "#f1f5f9"  # Light gray on hover
+ # ... other light mode colors stay the same ...
+    SECTION_LABEL_COLOR = "#2563eb"
+    # Light mode toggle button - FIXED HIGH CONTRAST
+    THEME_BTN_BG      = "#ffffff"
+    THEME_BTN_COLOR   = "#1e293b"
+    THEME_BTN_BORDER  = "#1e293b"
+    THEME_BTN_HOVER_BG = "#f1f5f9"
 
 # ========== INJECT CSS ==========
 st.markdown(f"""
