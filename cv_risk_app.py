@@ -14,12 +14,6 @@ if "theme" not in st.session_state:
 def toggle_theme():
     st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
 
-def reset_all():
-    preserve = {"theme"}
-    keys_to_delete = [k for k in st.session_state.keys() if k not in preserve]
-    for k in keys_to_delete:
-        del st.session_state[k]
-
 is_dark = st.session_state.theme == "dark"
 
 # ========== THEME VARIABLES ==========
@@ -76,14 +70,11 @@ if is_dark:
     TOOLBAR_BTN_BORDER= "#4c9ef8"
     TOOLBAR_BTN_COLOR = "#e8eaf0"
     SECTION_LABEL_COLOR = "#4c9ef8"
-    RESET_BTN_BG      = "#2a2f45"
-    RESET_BTN_COLOR   = "#e8eaf0"
-    RESET_BTN_BORDER  = "#6b7a9e"
-    RESET_BTN_HOVER_BG = "#3a4560"
-    THEME_BTN_BG      = "#4c9ef8"
-    THEME_BTN_COLOR   = "#ffffff"
-    THEME_BTN_BORDER  = "#4c9ef8"
-    THEME_BTN_HOVER_BG = "#3a82d6"
+    # Dark mode toggle button - HIGH CONTRAST
+    THEME_BTN_BG      = "#fbbf24"
+    THEME_BTN_COLOR   = "#1f2937"
+    THEME_BTN_BORDER  = "#fbbf24"
+    THEME_BTN_HOVER_BG = "#f59e0b"
 else:
     BG_PAGE        = "#f0f2f6"
     BG_SECONDARY   = "#ffffff"
@@ -137,14 +128,11 @@ else:
     TOOLBAR_BTN_BORDER= "#dde1e9"
     TOOLBAR_BTN_COLOR = "#475569"
     SECTION_LABEL_COLOR = "#2563eb"
-    RESET_BTN_BG      = "#ffffff"
-    RESET_BTN_COLOR   = "#374151"
-    RESET_BTN_BORDER  = "#d1d5db"
-    RESET_BTN_HOVER_BG = "#f9fafb"
-    THEME_BTN_BG      = "#2563eb"
+    # Light mode toggle button - HIGH CONTRAST
+    THEME_BTN_BG      = "#1e293b"
     THEME_BTN_COLOR   = "#ffffff"
-    THEME_BTN_BORDER  = "#2563eb"
-    THEME_BTN_HOVER_BG = "#1e40af"
+    THEME_BTN_BORDER  = "#1e293b"
+    THEME_BTN_HOVER_BG = "#0f172a"
 
 # ========== INJECT CSS ==========
 st.markdown(f"""
@@ -379,44 +367,24 @@ st.markdown(f"""
         box-shadow: none !important;
     }}
 
-    /* ---- Reset button - IMPROVED CONTRAST ---- */
-    .cv-reset-btn .stButton > button {{
-        background-color: {RESET_BTN_BG} !important;
-        color: {RESET_BTN_COLOR} !important;
-        border: 1.5px solid {RESET_BTN_BORDER} !important;
-        border-radius: 7px !important;
-        font-size: 0.82rem !important;
-        font-weight: 600 !important;
-        padding: 0.5rem 1.2rem !important;
-        width: 100% !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-        transition: all 0.15s !important;
-    }}
-    .cv-reset-btn .stButton > button:hover {{
-        border-color: {ACCENT} !important;
-        color: {ACCENT} !important;
-        background-color: {RESET_BTN_HOVER_BG} !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
-    }}
-
-    /* ---- Theme toggle button - IMPROVED CONTRAST ---- */
+    /* ---- Theme toggle button - HIGH CONTRAST FOR BOTH MODES ---- */
     .cv-theme-btn .stButton > button {{
         background-color: {THEME_BTN_BG} !important;
         color: {THEME_BTN_COLOR} !important;
-        border: 1.5px solid {THEME_BTN_BORDER} !important;
+        border: 2px solid {THEME_BTN_BORDER} !important;
         border-radius: 7px !important;
-        font-size: 0.82rem !important;
-        font-weight: 600 !important;
-        padding: 0.5rem 1.2rem !important;
+        font-size: 0.85rem !important;
+        font-weight: 700 !important;
+        padding: 0.55rem 1.4rem !important;
         width: 100% !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
-        transition: all 0.15s !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        transition: all 0.2s !important;
     }}
     .cv-theme-btn .stButton > button:hover {{
         background-color: {THEME_BTN_HOVER_BG} !important;
         border-color: {THEME_BTN_HOVER_BG} !important;
-        color: #ffffff !important;
-        box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.25) !important;
     }}
 
     /* ---- Markdown ---- */
@@ -973,17 +941,10 @@ with hcol_refs:
     </div>
     """, unsafe_allow_html=True)
 
-# Row 2: spacer (left) + Reset + Mode buttons (right)
+# Row 2: spacer (left) + Theme toggle button (right) - RESET BUTTON REMOVED
 st.markdown('<div style="height: 0.7rem;"></div>', unsafe_allow_html=True)
 
-_, btn_spacer, btn_reset_col, btn_theme_col = st.columns([2, 0.5, 0.75, 0.75])
-
-with btn_reset_col:
-    st.markdown('<div class="cv-reset-btn">', unsafe_allow_html=True)
-    if st.button("↺ Reset", key="btn_reset", help="Clear all inputs"):
-        reset_all()
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+_, btn_spacer, btn_theme_col = st.columns([2, 1.25, 0.75])
 
 with btn_theme_col:
     st.markdown('<div class="cv-theme-btn">', unsafe_allow_html=True)
