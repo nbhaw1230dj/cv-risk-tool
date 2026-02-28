@@ -164,10 +164,14 @@ st.markdown(f"""
         max-width: 1200px !important;
     }}
 
-    /* ---- Universal text color ---- */
-    .stApp *, p, span, div, label, li {{
-        color: {TEXT_PRIMARY} !important;
-    }}
+  /* ---- Universal text color (EXCLUDE buttons) ---- */
+.stApp p,
+.stApp span,
+.stApp div,
+.stApp label,
+.stApp li {{
+    color: {TEXT_PRIMARY} !important;
+}}
 
     /* ---- Section headers (h2) - INCREASED SIZE ---- */
     h2 {{
