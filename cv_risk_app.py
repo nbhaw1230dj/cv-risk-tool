@@ -950,11 +950,20 @@ with hcol_refs:
 # Row 2: spacer (left) + Theme toggle button (right) - RESET BUTTON REMOVED
 st.markdown('<div style="height: 0.7rem;"></div>', unsafe_allow_html=True)
 
+# Emoji-only toggle
+emoji = "☀️" if is_dark else "🌙"
+
 _, btn_spacer, btn_theme_col = st.columns([2, 1.25, 0.75])
 
 with btn_theme_col:
     st.markdown('<div class="cv-theme-btn">', unsafe_allow_html=True)
-    st.button(f"{TOGGLE_ICON} {THEME_LABEL}", key="btn_theme", on_click=toggle_theme, help="Toggle light/dark mode")
+    st.button(
+        emoji,
+        key="btn_theme",
+        on_click=toggle_theme,
+        help="Toggle light/dark mode",
+        use_container_width=True
+    )
     st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="section-divider" style="margin-top:0.8rem;margin-bottom:0.6rem;"></div>', unsafe_allow_html=True)
